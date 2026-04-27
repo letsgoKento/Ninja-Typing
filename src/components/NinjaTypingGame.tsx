@@ -103,24 +103,24 @@ function getWordFontSize(length: number) {
 }
 
 function getJapaneseFontSize(length: number) {
-  if (length >= 24) {
-    return "clamp(1.22rem, 2.2vw, 2.45rem)";
+  if (length >= 21) {
+    return "clamp(1.05rem, 2.28vw, 2.15rem)";
   }
 
   if (length >= 18) {
-    return "clamp(1.38rem, 2.55vw, 2.85rem)";
+    return "clamp(1.18rem, 2.55vw, 2.55rem)";
   }
 
-  if (length >= 14) {
-    return "clamp(1.65rem, 3.05vw, 3.35rem)";
+  if (length >= 15) {
+    return "clamp(1.35rem, 2.9vw, 3rem)";
   }
 
-  if (length >= 13) {
-    return "clamp(1.85rem, 3.5vw, 3.9rem)";
+  if (length >= 12) {
+    return "clamp(1.55rem, 3.35vw, 3.55rem)";
   }
 
   if (length >= 9) {
-    return "clamp(2.15rem, 4.3vw, 4.8rem)";
+    return "clamp(1.82rem, 3.85vw, 4.15rem)";
   }
 
   return "clamp(2.6rem, 5.4vw, 5.8rem)";
@@ -531,10 +531,7 @@ function getTextProgress(text: string, reading: string, readingProgress: Reading
 
   const completed = Math.min(textLength, Math.floor((readingProgress.completed / readingLength) * textLength));
   const activeStart = Math.min(textLength - 1, completed);
-  const activeEnd = Math.min(
-    textLength,
-    Math.max(activeStart + 1, Math.ceil((readingProgress.activeEnd / readingLength) * textLength))
-  );
+  const activeEnd = Math.min(textLength, activeStart + 1);
 
   return {
     completed,
@@ -546,7 +543,7 @@ function getTextProgress(text: string, reading: string, readingProgress: Reading
 function renderPromptProgress(value: string, progress: ReadingProgress, variant: "kana" | "text", isWrong: boolean) {
   return Array.from(value).map((char, index) => {
     const completed = index < progress.completed;
-    const active = index >= progress.activeStart && index < progress.activeEnd;
+    const active = index === progress.activeStart;
     const displayChar = char === " " ? SPACE_MARK : char;
 
     return (

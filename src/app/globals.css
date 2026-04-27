@@ -997,13 +997,13 @@ button {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   place-items: center;
-  min-height: clamp(128px, 18dvh, 190px);
-  padding-inline: min(24vw, 300px);
+  min-height: clamp(112px, 15dvh, 164px);
+  padding-inline: clamp(8px, 2vw, 36px);
 }
 
 .prompt-stack {
   display: grid;
-  min-height: clamp(112px, 16dvh, 174px);
+  min-height: clamp(98px, 13dvh, 146px);
   place-items: center;
   gap: 0.65rem;
   padding: 0.8rem 0.5rem 0;
@@ -1013,14 +1013,16 @@ button {
 .current-prompt-card {
   justify-self: center;
   min-width: 0;
-  width: min(100%, 920px);
+  width: 100%;
 }
 
 .kana-guide {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: center;
   gap: 0.16rem 0.22rem;
+  max-width: 100%;
+  overflow: visible;
   color: #93c5fd;
   font-size: clamp(1.08rem, 1.75vw, 1.5rem);
   font-weight: 900;
@@ -1030,9 +1032,9 @@ button {
 
 .japanese-prompt {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: center;
-  gap: 0.02em 0.04em;
+  gap: 0;
   max-width: 100%;
   overflow: visible;
   color: #f8fafc;
@@ -1040,9 +1042,9 @@ button {
   letter-spacing: 0;
   line-height: 1.12;
   text-shadow: 0 0 26px rgba(34, 211, 238, 0.24), 0 14px 36px rgba(0, 0, 0, 0.4);
-  white-space: normal;
+  white-space: nowrap;
   word-break: keep-all;
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
 }
 
 .prompt-char {
@@ -1054,9 +1056,9 @@ button {
 }
 
 .prompt-char-text {
-  min-width: 0.84em;
+  min-width: 0.78em;
   min-height: 1.08em;
-  padding: 0.01em 0.035em;
+  padding: 0.01em 0.025em;
 }
 
 .prompt-char-kana {
@@ -1085,28 +1087,29 @@ button {
 
 .next-prompt-preview {
   position: absolute;
-  top: 0;
-  right: 0;
+  top: -0.35rem;
+  right: 0.4rem;
   display: grid;
   grid-template-columns: 1fr;
   align-items: center;
-  gap: 0.25rem;
-  width: min(24vw, 280px);
-  max-width: 280px;
+  gap: 0.16rem;
+  width: min(17vw, 176px);
+  max-width: 176px;
   border: 1px solid rgba(103, 232, 249, 0.16);
-  border-radius: 20px;
+  border-radius: 16px;
   background:
     linear-gradient(135deg, rgba(34, 211, 238, 0.11), rgba(15, 23, 42, 0.58)),
     rgba(15, 23, 42, 0.42);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  padding: 0.8rem 0.95rem;
+  padding: 0.5rem 0.62rem;
   text-align: left;
-  transform: translateY(-12%);
+  transform: none;
+  opacity: 0.86;
 }
 
 .next-prompt-preview span {
   color: #67e8f9;
-  font-size: 0.68rem;
+  font-size: 0.54rem;
   font-weight: 950;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -1115,7 +1118,7 @@ button {
 .next-prompt-preview strong {
   overflow: hidden;
   color: #cbd5e1;
-  font-size: clamp(0.92rem, 1.4vw, 1.1rem);
+  font-size: clamp(0.72rem, 0.9vw, 0.86rem);
   font-weight: 950;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1124,7 +1127,7 @@ button {
 .next-prompt-preview em {
   overflow: hidden;
   color: #93c5fd;
-  font-size: 0.74rem;
+  font-size: 0.62rem;
   font-style: normal;
   font-weight: 800;
   opacity: 0.82;
@@ -2145,8 +2148,8 @@ button {
     position: relative;
     top: auto;
     right: auto;
-    width: min(100%, 360px);
-    max-width: 100%;
+    width: min(100%, 176px);
+    max-width: 176px;
     justify-self: center;
     justify-items: center;
     border-radius: 16px;
