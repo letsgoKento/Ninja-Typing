@@ -204,3 +204,65 @@ export function buildRomajiOptions(reading: string) {
 export function getRomajiGuide(candidates: string[], input: string) {
   return candidates.find((candidate) => candidate.startsWith(input)) ?? candidates[0] ?? "";
 }
+
+export type ReadingProgress = {
+  completed: number;
+  activeStart: number;
+  activeEnd: number;
+};
+
+function findMatchedOption(candidate: string, start: number, options: string[]) {
+  return options.find((option) => candidate.startsWith(option, start)) ?? options[0] ?? "";
+}
+
+export function getReadingProgress(reading: string, guide: string, input: string): ReadingProgress {
+  const source = toHiragana(reading.toLowerCase());
+  const inputLength = input.length;
+  let sourceIndex = 0;
+  let romanIndex = 0;
+
+  while (sourceIndex < source.length) {
+    const segmentStart = sourceIndex;
+    let segmentEnd = sourceIndex + 1;
+    let romanEnd = romanIndex + 1;
+
+    if (source[sourceIndex] === "\u3063") {
+      const explicitSmallTsu = findMatchedOption(guide, romanIndex, KANA_ROMAJI[source[sourceIndex]]);
+
+      if (explicitSmallTsu && guide.startsWith(explicitSmallTsu, romanIndex)) {
+        romanEnd = romanIndex + explicitSmallTsu.length;
+      } else {
+        romanEnd = romanIndex + 1;
+      }
+    } else {
+      const pair = source.slice(sourceIndex, sourceIndex + 2);
+      const pairOptions = COMBO_ROMAJI[pair];
+
+      if (pairOptions) {
+        const option = findMatchedOption(guide, romanIndex, pairOptions);
+        segmentEnd = sourceIndex + 2;
+        romanEnd = romanIndex + option.length;
+      } else {
+        const option = findMatchedOption(guide, romanIndex, KANA_ROMAJI[source[sourceIndex]] ?? [source[sourceIndex]]);
+        romanEnd = romanIndex + option.length;
+      }
+    }
+
+    if (inputLength < romanEnd) {
+      return {
+        completed: segmentStart,
+        activeStart: segmentStart,
+        activeEnd: segmentEnd
+      };
+    }
+
+    sourceIndex = segmentEnd;
+    romanIndex = romanEnd;
+  }
+
+  return {
+    completed: source.length,
+    activeStart: source.length,
+    activeEnd: source.length
+  };
+}

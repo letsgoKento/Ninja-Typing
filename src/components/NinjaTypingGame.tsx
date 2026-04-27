@@ -22,7 +22,7 @@ import {
   type Metrics,
   type RankDefinition
 } from "@/lib/game";
-import { buildRomajiOptions, getRomajiGuide } from "@/lib/romaji";
+import { buildRomajiOptions, getReadingProgress, getRomajiGuide, type ReadingProgress } from "@/lib/romaji";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import type { LeaderboardRecord } from "@/types/leaderboard";
 import { createGameShareUrl, createScoreShareUrl, openShareUrl } from "@/utils/share";
@@ -103,8 +103,16 @@ function getWordFontSize(length: number) {
 }
 
 function getJapaneseFontSize(length: number) {
-  if (length >= 17) {
-    return "clamp(1.55rem, 3vw, 3.3rem)";
+  if (length >= 24) {
+    return "clamp(1.22rem, 2.2vw, 2.45rem)";
+  }
+
+  if (length >= 18) {
+    return "clamp(1.38rem, 2.55vw, 2.85rem)";
+  }
+
+  if (length >= 14) {
+    return "clamp(1.65rem, 3.05vw, 3.35rem)";
   }
 
   if (length >= 13) {
@@ -509,6 +517,55 @@ function renderChar(char: string, index: number, input: string, wrongIndex: numb
   );
 }
 
+function getTextProgress(text: string, reading: string, readingProgress: ReadingProgress): ReadingProgress {
+  const textLength = Array.from(text).length;
+  const readingLength = Math.max(1, Array.from(reading).length);
+
+  if (textLength === 0 || readingProgress.completed >= readingLength) {
+    return {
+      completed: textLength,
+      activeStart: textLength,
+      activeEnd: textLength
+    };
+  }
+
+  const completed = Math.min(textLength, Math.floor((readingProgress.completed / readingLength) * textLength));
+  const activeStart = Math.min(textLength - 1, completed);
+  const activeEnd = Math.min(
+    textLength,
+    Math.max(activeStart + 1, Math.ceil((readingProgress.activeEnd / readingLength) * textLength))
+  );
+
+  return {
+    completed,
+    activeStart,
+    activeEnd
+  };
+}
+
+function renderPromptProgress(value: string, progress: ReadingProgress, variant: "kana" | "text", isWrong: boolean) {
+  return Array.from(value).map((char, index) => {
+    const completed = index < progress.completed;
+    const active = index >= progress.activeStart && index < progress.activeEnd;
+    const displayChar = char === " " ? SPACE_MARK : char;
+
+    return (
+      <span
+        key={`${variant}-${char}-${index}`}
+        className={[
+          "prompt-char",
+          `prompt-char-${variant}`,
+          completed ? "prompt-char-complete" : "",
+          active && !completed ? "prompt-char-active" : "",
+          active && isWrong ? "prompt-char-wrong" : ""
+        ].join(" ")}
+      >
+        {displayChar}
+      </span>
+    );
+  });
+}
+
 export function NinjaTypingGame() {
   const [status, setStatus] = useState<GameStatus>("idle");
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
@@ -543,6 +600,11 @@ export function NinjaTypingGame() {
   const rank = useMemo(() => getRank(metrics.score), [metrics.score]);
   const romajiCandidates = useMemo(() => buildRomajiOptions(currentPrompt.reading), [currentPrompt.reading]);
   const romajiGuide = useMemo(() => getRomajiGuide(romajiCandidates, input), [input, romajiCandidates]);
+  const readingProgress = useMemo(() => getReadingProgress(currentPrompt.reading, romajiGuide, input), [currentPrompt.reading, input, romajiGuide]);
+  const textProgress = useMemo(
+    () => getTextProgress(currentPrompt.text, currentPrompt.reading, readingProgress),
+    [currentPrompt.reading, currentPrompt.text, readingProgress]
+  );
   const comboCallout = getComboCallout(metrics.combo);
   const auraClass = metrics.combo >= 18 ? "combo-legend" : metrics.combo >= 10 ? "combo-hot" : "";
 
@@ -1285,9 +1347,11 @@ export function NinjaTypingGame() {
 
                   <div className="prompt-row">
                     <div className="prompt-stack current-prompt-card">
-                      <div className="kana-guide">{currentPrompt.reading}</div>
+                      <div className="kana-guide">
+                        {renderPromptProgress(currentPrompt.reading, readingProgress, "kana", wrongIndex !== null)}
+                      </div>
                       <div className="japanese-prompt" style={{ fontSize: getJapaneseFontSize(currentPrompt.text.length) }}>
-                        {currentPrompt.text}
+                        {renderPromptProgress(currentPrompt.text, textProgress, "text", wrongIndex !== null)}
                       </div>
                     </div>
                     <div className="next-prompt-preview">
