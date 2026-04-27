@@ -24,14 +24,17 @@ type VisualEffect = {
 
 type AudioKind = "type" | "miss" | "clear" | "hit" | "start";
 
-type AmbientNodes = {
-  oscillators: OscillatorNode[];
-  gain: GainNode;
+type EnemyConfig = {
+  id: number;
+  label: string;
+  left: number;
+  top: number;
+  scale: number;
+  variant: number;
 };
 
 const JA_TITLE = "\u5fcd\u8005\u30bf\u30a4\u30d4\u30f3\u30b0";
-const SPACE_MARK = "\u00b7";
-const SHURIKEN_MARK = "\u2726";
+const SPACE_MARK = "\u00a0";
 
 const COPY = {
   countdown: "60\u79d2\u3067\u4f55\u4f53\u5012\u305b\u308b\u304b",
@@ -45,11 +48,41 @@ const COPY = {
   bestChase: "\u307e\u3067\u3042\u3068\u5c11\u3057\u3002"
 };
 
-const enemyNames = ["KAGE", "RONIN", "TARGET", "AKUMA"];
+const enemyNames = ["KAGE", "RONIN", "SENTRY", "SHADOW", "TARGET"];
+
+function createEnemyConfig(id: number): EnemyConfig {
+  return {
+    id,
+    label: enemyNames[id % enemyNames.length],
+    left: 58 + Math.random() * 30,
+    top: 28 + Math.random() * 42,
+    scale: 0.86 + Math.random() * 0.24,
+    variant: id % 4
+  };
+}
+
+function getWordFontSize(length: number) {
+  if (length >= 28) {
+    return "clamp(1.05rem, 2.1vw, 2.25rem)";
+  }
+
+  if (length >= 23) {
+    return "clamp(1.2rem, 2.45vw, 2.7rem)";
+  }
+
+  if (length >= 18) {
+    return "clamp(1.45rem, 3.05vw, 3.25rem)";
+  }
+
+  if (length >= 14) {
+    return "clamp(1.8rem, 3.7vw, 4rem)";
+  }
+
+  return "clamp(2.05rem, 4.5vw, 4.7rem)";
+}
 
 function useNinjaAudio(enabled: boolean) {
   const contextRef = useRef<AudioContext | null>(null);
-  const ambientRef = useRef<AmbientNodes | null>(null);
 
   const getContext = useCallback(() => {
     if (!enabled || typeof window === "undefined") {
@@ -113,10 +146,10 @@ function useNinjaAudio(enabled: boolean) {
         return;
       }
 
-      oscillator.type = kind === "start" ? "sine" : "square";
-      oscillator.frequency.setValueAtTime(kind === "start" ? 220 : 660, now);
-      oscillator.frequency.exponentialRampToValueAtTime(kind === "start" ? 520 : 880, now + 0.08);
-      gain.gain.setValueAtTime(kind === "start" ? 0.08 : 0.032, now);
+      oscillator.type = kind === "start" ? "sine" : "triangle";
+      oscillator.frequency.setValueAtTime(kind === "start" ? 220 : 640, now);
+      oscillator.frequency.exponentialRampToValueAtTime(kind === "start" ? 520 : 820, now + 0.08);
+      gain.gain.setValueAtTime(kind === "start" ? 0.08 : 0.022, now);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
       oscillator.start(now);
       oscillator.stop(now + 0.11);
@@ -124,51 +157,8 @@ function useNinjaAudio(enabled: boolean) {
     [getContext]
   );
 
-  const startAmbient = useCallback(() => {
-    const context = getContext();
-
-    if (!context || ambientRef.current) {
-      return;
-    }
-
-    const gain = context.createGain();
-    const low = context.createOscillator();
-    const high = context.createOscillator();
-    const now = context.currentTime;
-
-    low.type = "sine";
-    high.type = "triangle";
-    low.frequency.setValueAtTime(74, now);
-    high.frequency.setValueAtTime(148, now);
-    gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(0.018, now + 0.4);
-
-    low.connect(gain);
-    high.connect(gain);
-    gain.connect(context.destination);
-    low.start(now);
-    high.start(now);
-
-    ambientRef.current = {
-      oscillators: [low, high],
-      gain
-    };
-  }, [getContext]);
-
-  const stopAmbient = useCallback(() => {
-    const ambient = ambientRef.current;
-
-    if (!ambient || !contextRef.current) {
-      return;
-    }
-
-    const now = contextRef.current.currentTime;
-    ambient.gain.gain.cancelScheduledValues(now);
-    ambient.gain.gain.setValueAtTime(ambient.gain.gain.value, now);
-    ambient.gain.gain.linearRampToValueAtTime(0, now + 0.18);
-    ambient.oscillators.forEach((oscillator) => oscillator.stop(now + 0.2));
-    ambientRef.current = null;
-  }, []);
+  const startAmbient = useCallback(() => undefined, []);
+  const stopAmbient = useCallback(() => undefined, []);
 
   useEffect(() => {
     if (!enabled) {
@@ -258,21 +248,29 @@ function NinjaFigure({ combo }: { combo: number }) {
   );
 }
 
-function EnemyFigure({ hit, seed }: { hit: boolean; seed: number }) {
-  const label = enemyNames[seed % enemyNames.length];
-
+function EnemyFigure({ hit, config }: { hit: boolean; config: EnemyConfig }) {
   return (
-    <motion.div
+    <div
       className="enemy-wrap"
-      animate={hit ? { scale: [1, 1.08, 0.72], opacity: [1, 1, 0] } : { y: [0, 4, 0] }}
-      transition={hit ? { duration: 0.34, ease: "easeOut" } : { duration: 2.2, repeat: Infinity }}
+      style={{
+        left: `${config.left}%`,
+        top: `${config.top}%`,
+        transform: `translate(-50%, -50%) scale(${config.scale})`
+      }}
     >
-      <div className="enemy-core">
-        <div className="enemy-horns" />
-        <div className="enemy-eye" />
-        <div className="enemy-label">{label}</div>
-      </div>
-    </motion.div>
+      <motion.div
+        className="enemy-motion"
+        animate={hit ? { scale: [1, 1.1, 0.64], opacity: [1, 1, 0], rotate: [0, -3, 7] } : { y: [0, 5, 0] }}
+        transition={hit ? { duration: 0.34, ease: "easeOut" } : { duration: 2.2, repeat: Infinity }}
+      >
+        <div className={`enemy-core enemy-variant-${config.variant}`}>
+          <div className="enemy-horns" />
+          <div className="enemy-eye" />
+          <div className="enemy-label">{config.label}</div>
+        </div>
+        <div className="target-ring" />
+      </motion.div>
+    </div>
   );
 }
 
@@ -310,7 +308,7 @@ export function NinjaTypingGame() {
   const [effects, setEffects] = useState<VisualEffect[]>([]);
   const [wrongIndex, setWrongIndex] = useState<number | null>(null);
   const [enemyHit, setEnemyHit] = useState(false);
-  const [enemySeed, setEnemySeed] = useState(0);
+  const [enemyConfig, setEnemyConfig] = useState(() => createEnemyConfig(0));
   const [attackId, setAttackId] = useState(0);
   const [isResolving, setIsResolving] = useState(false);
   const [screenShake, setScreenShake] = useState(false);
@@ -349,15 +347,15 @@ export function NinjaTypingGame() {
     setBestScore(savedScore ? Number(savedScore) : 0);
   }, [difficulty]);
 
-  const addEffect = useCallback((type: VisualEffect["type"]) => {
+  const addEffect = useCallback((type: VisualEffect["type"], position?: Pick<VisualEffect, "left" | "top">) => {
     const id = effectIdRef.current + 1;
     effectIdRef.current = id;
 
     const effect: VisualEffect = {
       id,
       type,
-      left: type === "hit" ? 78 : 42 + Math.random() * 22,
-      top: type === "hit" ? 46 : 34 + Math.random() * 30,
+      left: position?.left ?? (type === "hit" ? 78 : 42 + Math.random() * 22),
+      top: position?.top ?? (type === "hit" ? 46 : 34 + Math.random() * 30),
       rotate: -36 + Math.random() * 72
     };
 
@@ -415,7 +413,7 @@ export function NinjaTypingGame() {
     setEffects([]);
     setWrongIndex(null);
     setEnemyHit(false);
-    setEnemySeed((value) => value + 1);
+    setEnemyConfig((value) => createEnemyConfig(value.id + 1));
     setAttackId(0);
     setIsResolving(false);
     setScreenShake(false);
@@ -448,7 +446,7 @@ export function NinjaTypingGame() {
         }
 
         setEnemyHit(true);
-        addEffect("hit");
+        addEffect("hit", { left: enemyConfig.left, top: enemyConfig.top });
         audio.play("hit");
       }, 210);
 
@@ -464,12 +462,12 @@ export function NinjaTypingGame() {
         setCurrentWord(pickWord(difficulty, completedWord));
         setInput("");
         setEnemyHit(false);
-        setEnemySeed((value) => value + 1);
+        setEnemyConfig((value) => createEnemyConfig(value.id + 1));
         setWrongIndex(null);
         setIsResolving(false);
       }, 570);
     },
-    [addEffect, audio, difficulty]
+    [addEffect, audio, difficulty, enemyConfig.left, enemyConfig.top]
   );
 
   const handleKeyDown = useCallback(
@@ -685,17 +683,23 @@ export function NinjaTypingGame() {
                       <motion.div
                         key={attackId}
                         className="shuriken"
-                        initial={{ x: 0, y: 0, rotate: 0, opacity: 0 }}
-                        animate={{ x: ["0vw", "22vw", "39vw"], y: [0, -28, -5], rotate: 1080, opacity: [0, 1, 1, 0] }}
+                        initial={{ left: "21%", top: "52%", rotate: 0, opacity: 0, scale: 0.72 }}
+                        animate={{
+                          left: ["21%", `${Math.max(44, enemyConfig.left - 8)}%`, `${enemyConfig.left}%`],
+                          top: ["52%", `${Math.max(14, enemyConfig.top - 13)}%`, `${enemyConfig.top}%`],
+                          rotate: 1080,
+                          opacity: [0, 1, 1, 0],
+                          scale: [0.72, 1, 0.82]
+                        }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.36, ease: "easeOut" }}
                       >
-                        {SHURIKEN_MARK}
+                        <span />
                       </motion.div>
                     ) : null}
                   </AnimatePresence>
 
-                  <EnemyFigure hit={enemyHit} seed={enemySeed} />
+                  <EnemyFigure hit={enemyHit} config={enemyConfig} />
 
                   <div className="effect-layer">
                     <AnimatePresence>
@@ -733,7 +737,7 @@ export function NinjaTypingGame() {
                     ) : null}
                   </AnimatePresence>
 
-                  <div className="word-display" aria-label={`Type ${currentWord}`}>
+                  <div className="word-display" aria-label={`Type ${currentWord}`} style={{ fontSize: getWordFontSize(currentWord.length) }}>
                     {currentWord.split("").map((char, index) => renderChar(char, index, input, wrongIndex))}
                   </div>
                   <div className="input-readout">
