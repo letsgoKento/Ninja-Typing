@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { PointerEvent as ReactPointerEvent } from "react";
 import { Leaderboard } from "@/components/Leaderboard";
 import { ScoreSubmitForm } from "@/components/ScoreSubmitForm";
 import { DIFFICULTIES, type Difficulty, GAME_TIME_SECONDS, type TypingPrompt } from "@/data/wordBank";
@@ -26,7 +27,7 @@ type VisualEffect = {
   rotate: number;
 };
 
-type AudioKind = "type" | "miss" | "clear" | "hit" | "start";
+type AudioKind = "type" | "miss" | "clear" | "hit" | "start" | "tap";
 
 type EnemyConfig = {
   id: number;
@@ -144,6 +145,17 @@ function useNinjaAudio(enabled: boolean) {
 
       oscillator.connect(gain);
       gain.connect(context.destination);
+
+      if (kind === "tap") {
+        oscillator.type = "triangle";
+        oscillator.frequency.setValueAtTime(520, now);
+        oscillator.frequency.exponentialRampToValueAtTime(760, now + 0.06);
+        gain.gain.setValueAtTime(0.026, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+        oscillator.start(now);
+        oscillator.stop(now + 0.09);
+        return;
+      }
 
       if (kind === "miss") {
         oscillator.type = "sawtooth";
@@ -697,8 +709,20 @@ export function NinjaTypingGame() {
 
   const progress = Math.max(0, Math.min(100, (timeLeft / GAME_TIME_SECONDS) * 100));
 
+  const handleButtonPointerDown = useCallback(
+    (event: ReactPointerEvent<HTMLElement>) => {
+      const target = event.target as HTMLElement;
+      const button = target.closest("button") as HTMLButtonElement | null;
+
+      if (button && !button.disabled) {
+        audio.play("tap");
+      }
+    },
+    [audio]
+  );
+
   return (
-    <main className={`min-h-screen overflow-x-hidden bg-[#05070f] text-slate-100 ${auraClass}`}>
+    <main className={`min-h-screen overflow-x-hidden bg-[#05070f] text-slate-100 ${auraClass}`} onPointerDownCapture={handleButtonPointerDown}>
       <div className="scene-bg">
         <div className="moon" />
         <div className="castle">

@@ -13,7 +13,8 @@ export function getSupabaseClient() {
   if (!cachedClient) {
     cachedClient = createClient(supabaseUrl, supabaseKey, {
       auth: {
-        persistSession: false
+        autoRefreshToken: true,
+        persistSession: true
       }
     });
   }

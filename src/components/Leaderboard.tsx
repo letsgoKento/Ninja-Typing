@@ -11,6 +11,11 @@ type LeaderboardProps = {
   refreshToken?: string | number;
 };
 
+const LEADERBOARD_TEXT = {
+  empty: "\u307e\u3060\u8a18\u9332\u304c\u3042\u308a\u307e\u305b\u3093",
+  missingEnv: "Supabase\u306e\u74b0\u5883\u5909\u6570\u304c\u672a\u8a2d\u5b9a\u3067\u3059\u3002"
+};
+
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("ja-JP", {
     month: "2-digit",
@@ -37,7 +42,7 @@ export function Leaderboard({ initialDifficulty = "normal", highlightId, refresh
       const supabase = getSupabaseClient();
 
       if (!supabase) {
-        setErrorMessage("Supabase\u306e\u74b0\u5883\u5909\u6570\u304c\u672a\u8a2d\u5b9a\u3067\u3059\u3002");
+        setErrorMessage(LEADERBOARD_TEXT.missingEnv);
         setIsLoading(false);
         return;
       }
@@ -47,8 +52,9 @@ export function Leaderboard({ initialDifficulty = "normal", highlightId, refresh
 
       const { data, error } = await supabase
         .from("leaderboard")
-        .select("id, player_name, score, accuracy, max_combo, miss_count, difficulty, created_at")
+        .select("id, user_id, player_name, shoutout, score, accuracy, max_combo, miss_count, difficulty, created_at")
         .eq("difficulty", activeDifficulty)
+        .not("user_id", "is", null)
         .order("score", { ascending: false })
         .order("accuracy", { ascending: false })
         .order("max_combo", { ascending: false })
@@ -108,7 +114,7 @@ export function Leaderboard({ initialDifficulty = "normal", highlightId, refresh
       ) : null}
 
       {!isLoading && !errorMessage && records.length === 0 ? (
-        <div className="leaderboard-empty">\u307e\u3060\u8a18\u9332\u304c\u3042\u308a\u307e\u305b\u3093</div>
+        <div className="leaderboard-empty">{LEADERBOARD_TEXT.empty}</div>
       ) : null}
 
       {!isLoading && records.length > 0 ? (
@@ -123,6 +129,7 @@ export function Leaderboard({ initialDifficulty = "normal", highlightId, refresh
                 <div className="rank-badge">{rank}</div>
                 <div className="leaderboard-player">
                   <strong>{record.player_name}</strong>
+                  {record.shoutout ? <em>{record.shoutout}</em> : null}
                   <span>{formatDate(record.created_at)}</span>
                 </div>
                 <div className="leaderboard-score">

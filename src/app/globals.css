@@ -928,7 +928,28 @@ button {
   transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
 }
 
+.name-field textarea {
+  width: 100%;
+  min-height: 96px;
+  resize: vertical;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 14px;
+  background: rgba(2, 6, 23, 0.58);
+  color: #f8fafc;
+  font-weight: 800;
+  line-height: 1.55;
+  outline: none;
+  padding: 0.95rem 1rem;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
 .name-field input:focus {
+  border-color: rgba(34, 211, 238, 0.66);
+  background: rgba(8, 13, 28, 0.82);
+  box-shadow: 0 0 28px rgba(34, 211, 238, 0.14);
+}
+
+.name-field textarea:focus {
   border-color: rgba(34, 211, 238, 0.66);
   background: rgba(8, 13, 28, 0.82);
   box-shadow: 0 0 28px rgba(34, 211, 238, 0.14);
@@ -937,6 +958,99 @@ button {
 .name-field input:disabled {
   color: #94a3b8;
   cursor: not-allowed;
+}
+
+.name-field textarea:disabled {
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.auth-panel {
+  display: grid;
+  gap: 1rem;
+}
+
+.auth-help {
+  margin-top: 0.7rem;
+  color: #cbd5e1;
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.65;
+}
+
+.auth-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.auth-tabs button {
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.7);
+  color: #cbd5e1;
+  font-weight: 950;
+  padding: 0.8rem 0.9rem;
+  transition: border-color 160ms ease, background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+}
+
+.auth-tabs button:hover,
+.auth-tabs .auth-tab-active {
+  border-color: rgba(34, 211, 238, 0.55);
+  background: rgba(14, 116, 144, 0.24);
+  box-shadow: 0 0 24px rgba(34, 211, 238, 0.12);
+  color: #cffafe;
+}
+
+.auth-form {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.account-chip {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.35rem 0.8rem;
+  align-items: center;
+  border: 1px solid rgba(34, 211, 238, 0.18);
+  border-radius: 16px;
+  background: rgba(14, 116, 144, 0.12);
+  padding: 0.85rem 1rem;
+}
+
+.account-chip span {
+  color: #94a3b8;
+  font-size: 0.72rem;
+  font-weight: 950;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.account-chip strong {
+  grid-column: 1;
+  overflow: hidden;
+  color: #f8fafc;
+  font-size: 1.08rem;
+  font-weight: 950;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-chip button {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.72);
+  color: #cbd5e1;
+  font-size: 0.78rem;
+  font-weight: 900;
+  padding: 0.55rem 0.75rem;
+}
+
+.account-chip button:hover {
+  border-color: rgba(248, 113, 113, 0.5);
+  color: #fecdd3;
 }
 
 .submit-meta {
@@ -1141,6 +1255,17 @@ button {
   color: #94a3b8;
   font-size: 0.74rem;
   font-weight: 800;
+}
+
+.leaderboard-player em {
+  overflow: hidden;
+  color: #bae6fd;
+  font-size: 0.8rem;
+  font-style: normal;
+  font-weight: 800;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .leaderboard-score {

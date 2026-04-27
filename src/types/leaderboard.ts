@@ -2,7 +2,9 @@ import type { Difficulty } from "@/data/wordBank";
 
 export type LeaderboardRecord = {
   id: string;
+  user_id: string | null;
   player_name: string;
+  shoutout: string;
   score: number;
   accuracy: number;
   max_combo: number;
@@ -23,10 +25,16 @@ export function sanitizePlayerName(value: string) {
   return value.trim().replace(/\s+/g, " ");
 }
 
+export function sanitizeShoutout(value: string) {
+  return value.trim().replace(/\s+/g, " ");
+}
+
 export function isValidLeaderboardScore(entry: LeaderboardInsert) {
   return (
+    Boolean(entry.user_id) &&
     sanitizePlayerName(entry.player_name).length > 0 &&
     Array.from(sanitizePlayerName(entry.player_name)).length <= 20 &&
+    Array.from(sanitizeShoutout(entry.shoutout)).length <= 80 &&
     Number.isInteger(entry.score) &&
     entry.score >= 0 &&
     Number.isFinite(entry.accuracy) &&
