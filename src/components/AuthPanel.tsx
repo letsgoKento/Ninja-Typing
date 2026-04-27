@@ -3,11 +3,13 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import type { Session } from "@supabase/supabase-js";
+import { getAuthRedirectUrl, upsertProfile } from "@/lib/authHelpers";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import { sanitizePlayerName } from "@/types/leaderboard";
 
 type AuthPanelProps = {
   onAuthChanged: (session: Session | null, username?: string) => void;
+  helpText?: string;
 };
 
 const AUTH_TEXT = {
@@ -19,30 +21,13 @@ const AUTH_TEXT = {
   password: "\u30d1\u30b9\u30ef\u30fc\u30c9",
   needAuth: "\u30e9\u30f3\u30ad\u30f3\u30b0\u767b\u9332\u306b\u306f\u4f1a\u54e1\u767b\u9332\u307e\u305f\u306f\u30ed\u30b0\u30a4\u30f3\u304c\u5fc5\u8981\u3067\u3059\u3002",
   confirmEmail:
-    "\u767b\u9332\u30e1\u30fc\u30eb\u3092\u9001\u4fe1\u3057\u307e\u3057\u305f\u3002Supabase\u306e\u30e1\u30fc\u30eb\u78ba\u8a8d\u304cON\u306e\u5834\u5408\u306f\u3001\u78ba\u8a8d\u5f8c\u306b\u30ed\u30b0\u30a4\u30f3\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
+    "\u78ba\u8a8d\u30e1\u30fc\u30eb\u3092\u9001\u4fe1\u3057\u307e\u3057\u305f\u3002\u30e1\u30fc\u30eb\u5185\u306e\u30dc\u30bf\u30f3\u3092\u958b\u304f\u3068\u30a2\u30ab\u30a6\u30f3\u30c8\u304c\u6709\u52b9\u5316\u3055\u308c\u307e\u3059\u3002",
   usernameRequired: "\u30e6\u30fc\u30b6\u30fc\u30cd\u30fc\u30e0\u306f1\u301c20\u6587\u5b57\u3067\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
   passwordShort: "\u30d1\u30b9\u30ef\u30fc\u30c9\u306f6\u6587\u5b57\u4ee5\u4e0a\u306b\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
   missingEnv: "Supabase\u306e\u74b0\u5883\u5909\u6570\u304c\u672a\u8a2d\u5b9a\u3067\u3059\u3002"
 };
 
-async function upsertProfile(session: Session, username: string) {
-  const supabase = getSupabaseClient();
-
-  if (!supabase) {
-    return;
-  }
-
-  await supabase.from("profiles").upsert(
-    {
-      id: session.user.id,
-      username,
-      updated_at: new Date().toISOString()
-    },
-    { onConflict: "id" }
-  );
-}
-
-export function AuthPanel({ onAuthChanged }: AuthPanelProps) {
+export function AuthPanel({ onAuthChanged, helpText = AUTH_TEXT.needAuth }: AuthPanelProps) {
   const [mode, setMode] = useState<"register" | "login">("register");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -85,6 +70,7 @@ export function AuthPanel({ onAuthChanged }: AuthPanelProps) {
         email,
         password,
         options: {
+          emailRedirectTo: getAuthRedirectUrl(),
           data: {
             username: cleanUsername
           }
@@ -134,7 +120,7 @@ export function AuthPanel({ onAuthChanged }: AuthPanelProps) {
       <div>
         <p className="panel-kicker">Account</p>
         <h3 className="panel-title">{AUTH_TEXT.title}</h3>
-        <p className="auth-help">{AUTH_TEXT.needAuth}</p>
+        <p className="auth-help">{helpText}</p>
       </div>
 
       <div className="auth-tabs">
@@ -165,7 +151,7 @@ export function AuthPanel({ onAuthChanged }: AuthPanelProps) {
         </label>
 
         <button className="submit-score-button" type="submit" disabled={isBusy}>
-          {isBusy ? "Sending..." : mode === "register" ? AUTH_TEXT.register : AUTH_TEXT.login}
+          {isBusy ? "\u9001\u4fe1\u4e2d..." : mode === "register" ? AUTH_TEXT.register : AUTH_TEXT.login}
         </button>
       </form>
 

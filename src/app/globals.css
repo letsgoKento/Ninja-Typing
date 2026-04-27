@@ -272,11 +272,22 @@ button {
 .header-actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 0.7rem;
 }
 
 .wide-icon-button {
-  min-width: 78px;
+  min-width: 92px;
+}
+
+.account-header-button {
+  min-width: min(220px, 42vw);
+  max-width: 240px;
+  overflow: hidden;
+  color: #e2e8f0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .compact-button {
@@ -680,7 +691,7 @@ button {
 
 .prompt-stack {
   display: grid;
-  min-height: 132px;
+  min-height: 168px;
   place-items: center;
   gap: 0.4rem;
   padding: 0.8rem 0.5rem 0;
@@ -704,6 +715,50 @@ button {
   line-height: 1.08;
   text-overflow: ellipsis;
   text-shadow: 0 0 26px rgba(34, 211, 238, 0.24), 0 14px 36px rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
+}
+
+.next-prompt-preview {
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.2rem 0.7rem;
+  max-width: min(100%, 680px);
+  margin-top: 0.55rem;
+  border: 1px solid rgba(103, 232, 249, 0.16);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.42);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  padding: 0.45rem 0.9rem;
+}
+
+.next-prompt-preview span {
+  color: #67e8f9;
+  font-size: 0.68rem;
+  font-weight: 950;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.next-prompt-preview strong {
+  overflow: hidden;
+  color: #cbd5e1;
+  font-size: clamp(0.92rem, 1.4vw, 1.1rem);
+  font-weight: 950;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.next-prompt-preview em {
+  grid-column: 2;
+  overflow: hidden;
+  color: #93c5fd;
+  font-size: 0.74rem;
+  font-style: normal;
+  font-weight: 800;
+  opacity: 0.82;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -871,8 +926,22 @@ button {
   padding: clamp(36px, 6vh, 72px) 0 28px;
 }
 
+.auth-layout,
+.help-layout {
+  display: grid;
+  flex: 1;
+  align-content: center;
+  gap: 18px;
+  width: min(100%, 980px);
+  margin: 0 auto;
+  padding: clamp(36px, 6vh, 72px) 0 28px;
+}
+
 .score-submit-panel,
-.leaderboard-panel {
+.leaderboard-panel,
+.account-status-panel,
+.help-panel,
+.auth-callback-card {
   border: 1px solid rgba(148, 163, 184, 0.2);
   border-radius: 24px;
   background:
@@ -1005,6 +1074,113 @@ button {
 .auth-form {
   display: grid;
   gap: 0.85rem;
+}
+
+.account-status-panel {
+  display: grid;
+  gap: 1.1rem;
+  padding: clamp(22px, 3vw, 32px);
+}
+
+.account-status-panel h2,
+.help-panel h2,
+.auth-callback-card h1 {
+  color: #f8fafc;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-weight: 950;
+  line-height: 1.08;
+}
+
+.account-status-panel p {
+  max-width: 62ch;
+  color: #cbd5e1;
+  font-weight: 750;
+  line-height: 1.8;
+}
+
+.account-identity {
+  display: grid;
+  gap: 0.25rem;
+  border: 1px solid rgba(34, 211, 238, 0.18);
+  border-radius: 18px;
+  background: rgba(14, 116, 144, 0.12);
+  padding: 1rem;
+}
+
+.account-identity span {
+  color: #f8fafc;
+  font-size: clamp(1.25rem, 2.6vw, 1.9rem);
+  font-weight: 950;
+}
+
+.account-identity strong {
+  overflow: hidden;
+  color: #94a3b8;
+  font-size: 0.92rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.help-panel {
+  display: grid;
+  gap: 1.25rem;
+  padding: clamp(22px, 3vw, 32px);
+}
+
+.help-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.help-grid section {
+  display: grid;
+  gap: 0.65rem;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 18px;
+  background: rgba(8, 13, 28, 0.56);
+  padding: 1rem;
+}
+
+.help-grid section span {
+  width: 42px;
+  border: 1px solid rgba(34, 211, 238, 0.3);
+  border-radius: 999px;
+  color: #67e8f9;
+  font-size: 0.72rem;
+  font-weight: 950;
+  padding: 0.25rem 0;
+  text-align: center;
+}
+
+.help-grid h3 {
+  color: #f8fafc;
+  font-size: 1rem;
+  font-weight: 950;
+  line-height: 1.45;
+}
+
+.help-grid p {
+  color: #cbd5e1;
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.75;
+}
+
+.help-score-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.help-score-strip span {
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  border-radius: 999px;
+  background: rgba(251, 191, 36, 0.08);
+  color: #fde68a;
+  font-size: 0.78rem;
+  font-weight: 900;
+  padding: 0.55rem 0.75rem;
 }
 
 .account-chip {
@@ -1278,6 +1454,42 @@ button {
   font-weight: 950;
 }
 
+.auth-callback-page {
+  position: relative;
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  overflow: hidden;
+  padding: 24px;
+}
+
+.auth-callback-card {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: min(100%, 620px);
+  gap: 1rem;
+  padding: clamp(24px, 5vw, 44px);
+}
+
+.auth-callback-card p:not(.panel-kicker) {
+  color: #cbd5e1;
+  font-weight: 760;
+  line-height: 1.8;
+}
+
+.auth-callback-success {
+  border-color: rgba(45, 212, 191, 0.34);
+  box-shadow: 0 24px 90px rgba(0, 0, 0, 0.45), 0 0 42px rgba(20, 184, 166, 0.16);
+}
+
+.auth-callback-link {
+  display: inline-grid;
+  place-items: center;
+  width: fit-content;
+  text-decoration: none;
+}
+
 @keyframes skeletonSweep {
   0% {
     background-position: 120% 0;
@@ -1326,6 +1538,15 @@ button {
 }
 
 @media (max-width: 980px) {
+  header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .header-actions {
+    justify-content: flex-start;
+  }
+
   .title-layout {
     grid-template-columns: 1fr;
   }
@@ -1339,6 +1560,10 @@ button {
   }
 
   .post-result-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .help-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -1369,6 +1594,16 @@ button {
   .input-readout {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .next-prompt-preview {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    border-radius: 16px;
+  }
+
+  .next-prompt-preview em {
+    grid-column: 1;
   }
 
   .leaderboard-header {

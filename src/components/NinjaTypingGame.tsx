@@ -3,9 +3,12 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
+import type { Session } from "@supabase/supabase-js";
+import { AuthPanel } from "@/components/AuthPanel";
 import { Leaderboard } from "@/components/Leaderboard";
 import { ScoreSubmitForm } from "@/components/ScoreSubmitForm";
 import { DIFFICULTIES, type Difficulty, GAME_TIME_SECONDS, type TypingPrompt } from "@/data/wordBank";
+import { getFallbackUsername, loadProfileUsername } from "@/lib/authHelpers";
 import {
   calculateAccuracy,
   calculateWordScore,
@@ -17,6 +20,7 @@ import {
   type Metrics
 } from "@/lib/game";
 import { buildRomajiOptions, getRomajiGuide } from "@/lib/romaji";
+import { getSupabaseClient } from "@/lib/supabaseClient";
 import type { LeaderboardRecord } from "@/types/leaderboard";
 
 type VisualEffect = {
@@ -50,7 +54,11 @@ const COPY = {
   bestSaved: "\u6700\u9ad8\u30b9\u30b3\u30a2\u4fdd\u5b58",
   bestUpdated:
     "\u6700\u9ad8\u30b9\u30b3\u30a2\u66f4\u65b0\u3002\u5207\u308c\u5473\u3001\u304b\u306a\u308a\u826f\u3044\u3067\u3059\u3002",
-  bestChase: "\u307e\u3067\u3042\u3068\u5c11\u3057\u3002"
+  bestChase: "\u307e\u3067\u3042\u3068\u5c11\u3057\u3002",
+  accountHelp:
+    "\u30a2\u30ab\u30a6\u30f3\u30c8\u3092\u4f5c\u308b\u3068\u3001\u30b9\u30b3\u30a2\u3092\u96e3\u6613\u5ea6\u3054\u3068\u306b1\u3064\u305a\u3064\u30e9\u30f3\u30ad\u30f3\u30b0\u306b\u767b\u9332\u3067\u304d\u307e\u3059\u3002",
+  signedIn: "\u30ed\u30b0\u30a4\u30f3\u4e2d",
+  signOut: "\u30ed\u30b0\u30a2\u30a6\u30c8"
 };
 
 const DIFFICULTY_ORDER: Difficulty[] = ["easy", "normal", "hard"];
@@ -235,6 +243,77 @@ function StatTile({
   );
 }
 
+function AccountScreen({
+  session,
+  username,
+  onAuthChanged,
+  onSignOut
+}: {
+  session: Session | null;
+  username: string;
+  onAuthChanged: (session: Session | null, username?: string) => void;
+  onSignOut: () => void;
+}) {
+  if (!session) {
+    return <AuthPanel helpText={COPY.accountHelp} onAuthChanged={onAuthChanged} />;
+  }
+
+  return (
+    <div className="account-status-panel">
+      <p className="panel-kicker">Account</p>
+      <h2>{COPY.signedIn}</h2>
+      <div className="account-identity">
+        <span>{username || getFallbackUsername(session)}</span>
+        <strong>{session.user.email}</strong>
+      </div>
+      <p>{COPY.accountHelp}</p>
+      <button className="ghost-button" type="button" onClick={onSignOut}>
+        {COPY.signOut}
+      </button>
+    </div>
+  );
+}
+
+function HowToPlayPanel() {
+  return (
+    <div className="help-panel">
+      <div>
+        <p className="panel-kicker">Guide</p>
+        <h2>遊び方とスコア</h2>
+      </div>
+
+      <div className="help-grid">
+        <section>
+          <span>01</span>
+          <h3>表示された読みをローマ字で入力</h3>
+          <p>しは si・shi・ci のように、一般的な打ち方は複数パターンに対応しています。</p>
+        </section>
+        <section>
+          <span>02</span>
+          <h3>正解で手裏剣、ミスでコンボリセット</h3>
+          <p>一つのお題を打ち切ると敵を撃破。ミスするとコンボが0に戻ります。</p>
+        </section>
+        <section>
+          <span>03</span>
+          <h3>スコアは長さ・難易度・コンボで上昇</h3>
+          <p>長いお題ほど基本点が高く、Normal・Hardでは難易度倍率がかかります。</p>
+        </section>
+        <section>
+          <span>04</span>
+          <h3>ランキングは難易度ごとに1人1件</h3>
+          <p>会員登録すると最高記録を保存できます。記録更新時は自動で上書きされます。</p>
+        </section>
+      </div>
+
+      <div className="help-score-strip">
+        <span>Base: 85 + 読みの長さ x 16</span>
+        <span>Combo: 5連ごとに +18%</span>
+        <span>Difficulty: Easy x1 / Normal x1.25 / Hard x1.55</span>
+      </div>
+    </div>
+  );
+}
+
 function NinjaFigure({ combo }: { combo: number }) {
   const aura = Math.min(combo / 30, 1);
 
@@ -347,6 +426,7 @@ export function NinjaTypingGame() {
   const [status, setStatus] = useState<GameStatus>("idle");
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
   const [currentPrompt, setCurrentPrompt] = useState(() => pickWord("normal"));
+  const [nextPrompt, setNextPrompt] = useState(() => pickWord("normal"));
   const [input, setInput] = useState("");
   const [metrics, setMetrics] = useState<Metrics>(initialMetrics);
   const [timeLeft, setTimeLeft] = useState(GAME_TIME_SECONDS);
@@ -362,6 +442,8 @@ export function NinjaTypingGame() {
   const [lastRunWasBest, setLastRunWasBest] = useState(false);
   const [leaderboardDifficulty, setLeaderboardDifficulty] = useState<Difficulty>("normal");
   const [submittedLeaderboardId, setSubmittedLeaderboardId] = useState<string | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [username, setUsername] = useState("");
   const endAtRef = useRef(0);
   const metricsRef = useRef(metrics);
   const statusRef = useRef(status);
@@ -382,6 +464,44 @@ export function NinjaTypingGame() {
   useEffect(() => {
     statusRef.current = status;
   }, [status]);
+
+  const refreshAccount = useCallback(async () => {
+    const supabase = getSupabaseClient();
+
+    if (!supabase) {
+      return;
+    }
+
+    const { data } = await supabase.auth.getSession();
+    setSession(data.session);
+
+    if (!data.session) {
+      setUsername("");
+      return;
+    }
+
+    setUsername(await loadProfileUsername(data.session));
+  }, []);
+
+  useEffect(() => {
+    const supabase = getSupabaseClient();
+
+    void refreshAccount();
+
+    if (!supabase) {
+      return;
+    }
+
+    const {
+      data: { subscription }
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession);
+      setUsername(nextSession ? getFallbackUsername(nextSession) : "");
+      void refreshAccount();
+    });
+
+    return () => subscription.unsubscribe();
+  }, [refreshAccount]);
 
   useEffect(() => {
     if (status === "playing" && soundEnabled) {
@@ -463,9 +583,11 @@ export function NinjaTypingGame() {
 
   const startGame = useCallback(() => {
     const firstPrompt = pickWord(difficulty, currentPrompt);
+    const queuedPrompt = pickWord(difficulty, firstPrompt);
 
     setStatus("playing");
     setCurrentPrompt(firstPrompt);
+    setNextPrompt(queuedPrompt);
     setInput("");
     setMetrics(initialMetrics);
     setTimeLeft(GAME_TIME_SECONDS);
@@ -507,6 +629,45 @@ export function NinjaTypingGame() {
     [audio, difficulty]
   );
 
+  const openAuth = useCallback(() => {
+    audio.stopAmbient();
+    setStatus("auth");
+    setInput("");
+    setIsResolving(false);
+    setWrongIndex(null);
+    setEnemyHit(false);
+  }, [audio]);
+
+  const openHelp = useCallback(() => {
+    audio.stopAmbient();
+    setStatus("help");
+    setInput("");
+    setIsResolving(false);
+    setWrongIndex(null);
+    setEnemyHit(false);
+  }, [audio]);
+
+  const handleHeaderAuthChanged = useCallback(
+    (nextSession: Session | null, nextUsername?: string) => {
+      setSession(nextSession);
+      setUsername(nextUsername ?? (nextSession ? getFallbackUsername(nextSession) : ""));
+      void refreshAccount();
+    },
+    [refreshAccount]
+  );
+
+  const handleSignOut = useCallback(async () => {
+    const supabase = getSupabaseClient();
+
+    if (!supabase) {
+      return;
+    }
+
+    await supabase.auth.signOut();
+    setSession(null);
+    setUsername("");
+  }, []);
+
   const handleLeaderboardSubmitted = useCallback((record: LeaderboardRecord) => {
     setSubmittedLeaderboardId(record.id);
     setLeaderboardDifficulty(record.difficulty);
@@ -538,7 +699,9 @@ export function NinjaTypingGame() {
           return;
         }
 
-        setCurrentPrompt(pickWord(difficulty, completedPrompt));
+        const incomingPrompt = nextPrompt.text === completedPrompt.text ? pickWord(difficulty, completedPrompt) : nextPrompt;
+        setCurrentPrompt(incomingPrompt);
+        setNextPrompt(pickWord(difficulty, incomingPrompt));
         setInput("");
         setEnemyHit(false);
         setEnemyConfig((value) => createEnemyConfig(value.id + 1));
@@ -546,13 +709,13 @@ export function NinjaTypingGame() {
         setIsResolving(false);
       }, 570);
     },
-    [addEffect, audio, difficulty, enemyConfig.left, enemyConfig.top]
+    [addEffect, audio, difficulty, enemyConfig.left, enemyConfig.top, nextPrompt]
   );
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        if (status === "playing" || status === "finished" || status === "leaderboard") {
+        if (status === "playing" || status === "finished" || status === "leaderboard" || status === "auth" || status === "help") {
           event.preventDefault();
           returnToTitle();
         }
@@ -606,6 +769,16 @@ export function NinjaTypingGame() {
         if (event.key.toLowerCase() === "l") {
           event.preventDefault();
           openLeaderboard();
+        }
+
+        if (event.key.toLowerCase() === "a") {
+          event.preventDefault();
+          openAuth();
+        }
+
+        if (event.key.toLowerCase() === "h") {
+          event.preventDefault();
+          openHelp();
         }
 
         return;
@@ -696,6 +869,8 @@ export function NinjaTypingGame() {
       returnToTitle,
       romajiCandidates,
       openLeaderboard,
+      openAuth,
+      openHelp,
       selectDifficultyByOffset,
       startGame,
       status
@@ -744,17 +919,27 @@ export function NinjaTypingGame() {
           <div className="header-actions">
             {status !== "playing" ? (
               <button className="icon-button wide-icon-button" type="button" onClick={() => openLeaderboard()}>
-                Rank
+                ランキング
+              </button>
+            ) : null}
+            {status !== "playing" ? (
+              <button className="icon-button wide-icon-button" type="button" onClick={openHelp}>
+                遊び方
+              </button>
+            ) : null}
+            {status !== "playing" ? (
+              <button className="icon-button account-header-button" type="button" onClick={openAuth}>
+                {session ? username || getFallbackUsername(session) : "会員登録 / ログイン"}
               </button>
             ) : null}
             <button
               className="icon-button"
               type="button"
               onClick={() => setSoundEnabled((value) => !value)}
-              aria-label={soundEnabled ? "Sound on" : "Sound off"}
-              title={soundEnabled ? "Sound on" : "Sound off"}
+              aria-label={soundEnabled ? "効果音 ON" : "効果音 OFF"}
+              title={soundEnabled ? "効果音 ON" : "効果音 OFF"}
             >
-              {soundEnabled ? "ON" : "OFF"}
+              {soundEnabled ? "効果音 ON" : "効果音 OFF"}
             </button>
           </div>
         </header>
@@ -811,7 +996,7 @@ export function NinjaTypingGame() {
                   </div>
                 </div>
 
-                <div className="mt-7 flex items-end justify-between gap-4 border-t border-white/10 pt-6">
+                <div className="mt-7 flex flex-wrap items-end justify-between gap-4 border-t border-white/10 pt-6">
                   <div>
                     <span className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">Best</span>
                     <p className="mt-1 text-3xl font-black text-amber-200">{bestScore.toLocaleString()}</p>
@@ -820,7 +1005,10 @@ export function NinjaTypingGame() {
                     Start
                   </button>
                   <button className="ghost-button compact-button" type="button" onClick={() => openLeaderboard(difficulty)}>
-                    Ranking
+                    ランキング
+                  </button>
+                  <button className="ghost-button compact-button" type="button" onClick={openHelp}>
+                    遊び方
                   </button>
                 </div>
               </div>
@@ -920,6 +1108,11 @@ export function NinjaTypingGame() {
                     <div className="japanese-prompt" style={{ fontSize: getJapaneseFontSize(currentPrompt.text.length) }}>
                       {currentPrompt.text}
                     </div>
+                    <div className="next-prompt-preview">
+                      <span>次のお題</span>
+                      <strong>{nextPrompt.text}</strong>
+                      <em>{nextPrompt.reading}</em>
+                    </div>
                   </div>
 
                   <div className="word-display" aria-label={`Type ${romajiGuide}`} style={{ fontSize: getWordFontSize(romajiGuide.length) }}>
@@ -975,13 +1168,13 @@ export function NinjaTypingGame() {
 
               <div className="result-actions">
                 <button className="start-button" type="button" onClick={startGame}>
-                  Play Again
+                  もう一度
                 </button>
                 <button className="ghost-button" type="button" onClick={() => openLeaderboard(difficulty)}>
-                  Ranking
+                  ランキング
                 </button>
                 <button className="ghost-button" type="button" onClick={returnToTitle}>
-                  Title
+                  タイトル
                 </button>
               </div>
             </motion.section>
@@ -1002,7 +1195,54 @@ export function NinjaTypingGame() {
                   Play
                 </button>
                 <button className="ghost-button" type="button" onClick={returnToTitle}>
-                  Title
+                  タイトル
+                </button>
+              </div>
+            </motion.section>
+          ) : null}
+
+          {status === "auth" ? (
+            <motion.section
+              key="auth"
+              className="auth-layout"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -16 }}
+              transition={{ duration: 0.28 }}
+            >
+              <AccountScreen
+                session={session}
+                username={username}
+                onAuthChanged={handleHeaderAuthChanged}
+                onSignOut={handleSignOut}
+              />
+              <div className="result-actions">
+                <button className="start-button" type="button" onClick={startGame}>
+                  Start
+                </button>
+                <button className="ghost-button" type="button" onClick={returnToTitle}>
+                  タイトル
+                </button>
+              </div>
+            </motion.section>
+          ) : null}
+
+          {status === "help" ? (
+            <motion.section
+              key="help"
+              className="help-layout"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -16 }}
+              transition={{ duration: 0.28 }}
+            >
+              <HowToPlayPanel />
+              <div className="result-actions">
+                <button className="start-button" type="button" onClick={startGame}>
+                  Start
+                </button>
+                <button className="ghost-button" type="button" onClick={returnToTitle}>
+                  タイトル
                 </button>
               </div>
             </motion.section>

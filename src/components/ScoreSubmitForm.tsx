@@ -5,6 +5,7 @@ import type { FormEvent } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { AuthPanel } from "@/components/AuthPanel";
 import type { Difficulty } from "@/data/wordBank";
+import { getFallbackUsername, loadProfileUsername } from "@/lib/authHelpers";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import {
   isValidLeaderboardScore,
@@ -68,16 +69,6 @@ function isNewRecordBetter(next: LeaderboardInsert, current: LeaderboardRecord) 
   return next.max_combo > current.max_combo;
 }
 
-function getFallbackUsername(session: Session | null) {
-  const username = sanitizePlayerName(String(session?.user.user_metadata?.username ?? ""));
-
-  if (username) {
-    return username.slice(0, 20);
-  }
-
-  return sanitizePlayerName(session?.user.email?.split("@")[0] ?? "SHINOBI").slice(0, 20);
-}
-
 export function ScoreSubmitForm({
   score,
   accuracy,
@@ -110,20 +101,8 @@ export function ScoreSubmitForm({
       return;
     }
 
-    const { data: profile } = await supabase.from("profiles").select("username").eq("id", nextSession.user.id).maybeSingle();
-    const nextUsername = sanitizePlayerName(String(profile?.username ?? getFallbackUsername(nextSession))).slice(0, 20);
+    const nextUsername = await loadProfileUsername(nextSession);
     setUsername(nextUsername);
-
-    if (!profile?.username) {
-      await supabase.from("profiles").upsert(
-        {
-          id: nextSession.user.id,
-          username: nextUsername,
-          updated_at: new Date().toISOString()
-        },
-        { onConflict: "id" }
-      );
-    }
   }, []);
 
   useEffect(() => {
@@ -311,7 +290,7 @@ export function ScoreSubmitForm({
   return (
     <form className="score-submit-panel" onSubmit={handleSubmit}>
       <div>
-        <p className="panel-kicker">Leaderboard Entry</p>
+        <p className="panel-kicker">ランキング登録</p>
         <h3 className="panel-title">{FORM_TEXT.title}</h3>
       </div>
 
