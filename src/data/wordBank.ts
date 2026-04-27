@@ -1,11 +1,16 @@
 export type Difficulty = "easy" | "normal" | "hard";
 
+export type TypingPrompt = {
+  text: string;
+  reading: string;
+};
+
 export type DifficultyConfig = {
   label: string;
   subtitle: string;
   description: string;
   multiplier: number;
-  words: string[];
+  words: TypingPrompt[];
 };
 
 export const GAME_TIME_SECONDS = 60;
@@ -13,80 +18,62 @@ export const GAME_TIME_SECONDS = 60;
 export const DIFFICULTIES: Record<Difficulty, DifficultyConfig> = {
   easy: {
     label: "Easy",
-    subtitle: "\u77ed\u3044\u82f1\u5358\u8a9e",
-    description: "\u30ea\u30ba\u30e0\u91cd\u8996\u3002\u30a6\u30a9\u30fc\u30e0\u30a2\u30c3\u30d7\u3084\u521d\u56de\u30d7\u30ec\u30a4\u5411\u3051\u3002",
+    subtitle: "\u77ed\u3044\u65e5\u672c\u8a9e",
+    description: "\u3072\u3089\u304c\u306a\u30fb\u6f22\u5b57\u306e\u77ed\u3044\u304a\u984c\u3002\u521d\u56de\u30d7\u30ec\u30a4\u5411\u3051\u3002",
     multiplier: 1,
     words: [
-      "ninja",
-      "moon",
-      "dash",
-      "slash",
-      "smoke",
-      "blade",
-      "focus",
-      "swift",
-      "shadow",
-      "strike",
-      "silent",
-      "castle",
-      "bamboo",
-      "kunai",
-      "stealth",
-      "shuriken",
-      "spark",
-      "guard",
-      "storm",
-      "honor"
+      { text: "\u5fcd\u8005", reading: "\u306b\u3093\u3058\u3083" },
+      { text: "\u5200", reading: "\u304b\u305f\u306a" },
+      { text: "\u6708\u591c", reading: "\u3064\u304d\u3088" },
+      { text: "\u624b\u88cf\u5263", reading: "\u3057\u3085\u308a\u3051\u3093" },
+      { text: "\u7159", reading: "\u3051\u3080\u308a" },
+      { text: "\u7af9\u6797", reading: "\u3061\u304f\u308a\u3093" },
+      { text: "\u5f71", reading: "\u304b\u3052" },
+      { text: "\u9b3c", reading: "\u304a\u306b" },
+      { text: "\u4fee\u884c", reading: "\u3057\u3085\u304e\u3087\u3046" },
+      { text: "\u96c6\u4e2d", reading: "\u3057\u3085\u3046\u3061\u3085\u3046" },
+      { text: "\u96f7", reading: "\u304b\u307f\u306a\u308a" },
+      { text: "\u708e", reading: "\u307b\u306e\u304a" }
     ]
   },
   normal: {
     label: "Normal",
-    subtitle: "\u9577\u3081\u306e\u5358\u8a9e",
-    description: "\u30b9\u30d4\u30fc\u30c9\u3068\u6b63\u78ba\u3055\u306e\u30d0\u30e9\u30f3\u30b9\u3092\u8a66\u3059\u6a19\u6e96\u30e2\u30fc\u30c9\u3002",
+    subtitle: "\u5358\u8a9e\u30fb\u77ed\u3044\u53e5",
+    description: "\u6f22\u5b57\u3084\u30ab\u30bf\u30ab\u30ca\u3092\u542b\u3080\u6a19\u6e96\u30e2\u30fc\u30c9\u3002",
     multiplier: 1.25,
     words: [
-      "midnight blade",
-      "silent mission",
-      "neon fortress",
-      "rapid shuriken",
-      "hidden passage",
-      "crimson signal",
-      "shadow training",
-      "electric katana",
-      "bamboo skyline",
-      "smoke vanish",
-      "perfect ambush",
-      "moonlit rooftop",
-      "cyber dojo",
-      "stealth protocol",
-      "victory stance",
-      "focus breathing",
-      "thunder step",
-      "secret scroll"
+      { text: "\u5fcd\u8005\u4fee\u884c", reading: "\u306b\u3093\u3058\u3083\u3057\u3085\u304e\u3087\u3046" },
+      { text: "\u591c\u306e\u57ce", reading: "\u3088\u308b\u306e\u3057\u308d" },
+      { text: "\u8d64\u3044\u5fcd\u8005", reading: "\u3042\u304b\u3044\u306b\u3093\u3058\u3083" },
+      { text: "\u9ad8\u901f\u79fb\u52d5", reading: "\u3053\u3046\u305d\u304f\u3044\u3069\u3046" },
+      { text: "\u9759\u304b\u306a\u6708", reading: "\u3057\u305a\u304b\u306a\u3064\u304d" },
+      { text: "\u5f71\u3092\u8ffd\u3046", reading: "\u304b\u3052\u3092\u304a\u3046" },
+      { text: "\u9b3c\u3092\u5012\u3059", reading: "\u304a\u306b\u3092\u305f\u304a\u3059" },
+      { text: "\u708e\u306e\u5200", reading: "\u307b\u306e\u304a\u306e\u304b\u305f\u306a" },
+      { text: "\u7159\u306b\u6d88\u3048\u308b", reading: "\u3051\u3080\u308a\u306b\u304d\u3048\u308b" },
+      { text: "\u4fee\u7f85\u306e\u9053", reading: "\u3057\u3085\u3089\u306e\u307f\u3061" },
+      { text: "\u96f7\u306e\u8853", reading: "\u304b\u307f\u306a\u308a\u306e\u3058\u3085\u3064" },
+      { text: "\u98a8\u306e\u624b\u88cf\u5263", reading: "\u304b\u305c\u306e\u3057\u3085\u308a\u3051\u3093" }
     ]
   },
   hard: {
     label: "Hard",
-    subtitle: "\u77ed\u6587\u4e2d\u5fc3",
-    description: "\u8a18\u53f7\u306a\u3057\u306e\u9577\u3081\u30d5\u30ec\u30fc\u30ba\u3002\u96c6\u4e2d\u529b\u304c\u554f\u308f\u308c\u308b\u4e0a\u7d1a\u30e2\u30fc\u30c9\u3002",
+    subtitle: "\u9577\u3081\u306e\u65e5\u672c\u8a9e",
+    description: "\u9577\u6587\u3084\u62d7\u97f3\u30fb\u4fc3\u97f3\u3092\u542b\u3080\u4e0a\u7d1a\u30e2\u30fc\u30c9\u3002",
     multiplier: 1.55,
     words: [
-      "strike fast fade faster",
-      "no noise no mercy",
-      "hold shift keep calm",
-      "mission rooftop entry",
-      "combo streak keep going",
-      "type clean move unseen",
-      "silent code sharp blade",
-      "target locked east gate",
-      "dash slash vanish",
-      "never miss the final key",
-      "smoke out reset position",
-      "shinobi is online",
-      "watch the cursor then cut",
-      "accuracy beats panic",
-      "legend rank requires focus",
-      "moon gate opens at midnight"
+      { text: "\u95c7\u591c\u306b\u8d70\u308b\u8d64\u3044\u5fcd\u8005", reading: "\u3084\u307f\u3088\u306b\u306f\u3057\u308b\u3042\u304b\u3044\u306b\u3093\u3058\u3083" },
+      { text: "\u6e80\u6708\u306e\u57ce\u3078\u5411\u304b\u3046", reading: "\u307e\u3093\u3052\u3064\u306e\u3057\u308d\u3078\u3080\u304b\u3046" },
+      { text: "\u9759\u304b\u306a\u7af9\u6797\u3092\u629c\u3051\u308b", reading: "\u3057\u305a\u304b\u306a\u3061\u304f\u308a\u3093\u3092\u306c\u3051\u308b" },
+      { text: "\u77ac\u9593\u79fb\u52d5\u3067\u80cc\u5f8c\u3092\u53d6\u308b", reading: "\u3057\u3085\u3093\u304b\u3093\u3044\u3069\u3046\u3067\u306f\u3044\u3054\u3092\u3068\u308b" },
+      { text: "\u30c1\u30e7\u30b3\u30ec\u30fc\u30c8\u30d1\u30d5\u30a7", reading: "\u3061\u3087\u3053\u308c\u30fc\u3068\u3071\u3075\u3047" },
+      { text: "\u5fcd\u3073\u306e\u9053\u306f\u4e00\u65e5\u306b\u3057\u3066\u306a\u3089\u305a", reading: "\u3057\u306e\u3073\u306e\u307f\u3061\u306f\u3044\u3061\u306b\u3061\u306b\u3057\u3066\u306a\u3089\u305a" },
+      { text: "\u9b3c\u706b\u304c\u591c\u7a7a\u306b\u63fa\u308c\u308b", reading: "\u304a\u306b\u3073\u304c\u3088\u305e\u3089\u306b\u3086\u308c\u308b" },
+      { text: "\u624b\u88cf\u5263\u306f\u6708\u660e\u304b\u308a\u306b\u5149\u308b", reading: "\u3057\u3085\u308a\u3051\u3093\u306f\u3064\u304d\u3042\u304b\u308a\u306b\u3072\u304b\u308b" },
+      { text: "\u7d05\u306e\u9b3c\u5fcd\u8005\u304c\u8feb\u308b", reading: "\u304f\u308c\u306a\u3044\u306e\u304a\u306b\u306b\u3093\u3058\u3083\u304c\u305b\u307e\u308b" },
+      { text: "\u6708\u660e\u304b\u308a\u306e\u4e0b\u3067\u69cb\u3048\u308b", reading: "\u3064\u304d\u3042\u304b\u308a\u306e\u3057\u305f\u3067\u304b\u307e\u3048\u308b" },
+      { text: "\u4e00\u6c17\u306b\u99c6\u3051\u629c\u3051\u308b", reading: "\u3044\u3063\u304d\u306b\u304b\u3051\u306c\u3051\u308b" },
+      { text: "\u8d64\u9b3c\u3092\u3084\u3063\u3064\u3051\u308b", reading: "\u3042\u304b\u304a\u306b\u3092\u3084\u3063\u3064\u3051\u308b" }
     ]
   }
 };

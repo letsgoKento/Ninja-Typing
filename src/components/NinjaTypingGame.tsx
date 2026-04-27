@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { DIFFICULTIES, type Difficulty, GAME_TIME_SECONDS } from "@/data/wordBank";
+import { DIFFICULTIES, type Difficulty, GAME_TIME_SECONDS, type TypingPrompt } from "@/data/wordBank";
 import {
   calculateAccuracy,
   calculateWordScore,
@@ -13,6 +13,7 @@ import {
   type GameStatus,
   type Metrics
 } from "@/lib/game";
+import { buildRomajiOptions, getRomajiGuide } from "@/lib/romaji";
 
 type VisualEffect = {
   id: number;
@@ -48,7 +49,8 @@ const COPY = {
   bestChase: "\u307e\u3067\u3042\u3068\u5c11\u3057\u3002"
 };
 
-const enemyNames = ["KAGE", "RONIN", "SENTRY", "SHADOW", "TARGET"];
+const DIFFICULTY_ORDER: Difficulty[] = ["easy", "normal", "hard"];
+const enemyNames = ["ONI", "AKA NINJA", "KAGE ONI", "ROGUE", "SHADOW"];
 
 function createEnemyConfig(id: number): EnemyConfig {
   return {
@@ -79,6 +81,22 @@ function getWordFontSize(length: number) {
   }
 
   return "clamp(2.05rem, 4.5vw, 4.7rem)";
+}
+
+function getJapaneseFontSize(length: number) {
+  if (length >= 17) {
+    return "clamp(1.55rem, 3vw, 3.3rem)";
+  }
+
+  if (length >= 13) {
+    return "clamp(1.85rem, 3.5vw, 3.9rem)";
+  }
+
+  if (length >= 9) {
+    return "clamp(2.15rem, 4.3vw, 4.8rem)";
+  }
+
+  return "clamp(2.6rem, 5.4vw, 5.8rem)";
 }
 
 function useNinjaAudio(enabled: boolean) {
@@ -169,12 +187,12 @@ function useNinjaAudio(enabled: boolean) {
   return useMemo(() => ({ play, startAmbient, stopAmbient }), [play, startAmbient, stopAmbient]);
 }
 
-function pickWord(difficulty: Difficulty, previousWord?: string) {
+function pickWord(difficulty: Difficulty, previousWord?: TypingPrompt) {
   const words = DIFFICULTIES[difficulty].words;
   let nextWord = words[Math.floor(Math.random() * words.length)];
 
   if (words.length > 1) {
-    while (nextWord === previousWord) {
+    while (nextWord.text === previousWord?.text) {
       nextWord = words[Math.floor(Math.random() * words.length)];
     }
   }
@@ -251,6 +269,7 @@ function NinjaFigure({ combo }: { combo: number }) {
 function EnemyFigure({ hit, config }: { hit: boolean; config: EnemyConfig }) {
   return (
     <div
+      key={config.id}
       className="enemy-wrap"
       style={{
         left: `${config.left}%`,
@@ -259,13 +278,26 @@ function EnemyFigure({ hit, config }: { hit: boolean; config: EnemyConfig }) {
       }}
     >
       <motion.div
+        key={config.id}
         className="enemy-motion"
-        animate={hit ? { scale: [1, 1.1, 0.64], opacity: [1, 1, 0], rotate: [0, -3, 7] } : { y: [0, 5, 0] }}
+        initial={{ opacity: 1, scale: 1, rotate: 0 }}
+        animate={
+          hit
+            ? { scale: [1, 1.1, 0.64], opacity: [1, 1, 0], rotate: [0, -3, 7], y: [0, -2, 8] }
+            : { y: [0, 5, 0], opacity: 1, scale: 1, rotate: 0 }
+        }
         transition={hit ? { duration: 0.34, ease: "easeOut" } : { duration: 2.2, repeat: Infinity }}
       >
         <div className={`enemy-core enemy-variant-${config.variant}`}>
-          <div className="enemy-horns" />
-          <div className="enemy-eye" />
+          <div className="enemy-horns">
+            <span />
+            <span />
+          </div>
+          <div className="enemy-mask">
+            <span />
+            <span />
+          </div>
+          <div className="enemy-mouth" />
           <div className="enemy-label">{config.label}</div>
         </div>
         <div className="target-ring" />
@@ -299,7 +331,7 @@ function renderChar(char: string, index: number, input: string, wrongIndex: numb
 export function NinjaTypingGame() {
   const [status, setStatus] = useState<GameStatus>("idle");
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
-  const [currentWord, setCurrentWord] = useState(() => pickWord("normal"));
+  const [currentPrompt, setCurrentPrompt] = useState(() => pickWord("normal"));
   const [input, setInput] = useState("");
   const [metrics, setMetrics] = useState<Metrics>(initialMetrics);
   const [timeLeft, setTimeLeft] = useState(GAME_TIME_SECONDS);
@@ -321,6 +353,8 @@ export function NinjaTypingGame() {
 
   const accuracy = useMemo(() => calculateAccuracy(metrics.correctKeys, metrics.totalKeys), [metrics.correctKeys, metrics.totalKeys]);
   const rank = useMemo(() => getRank(metrics.score, accuracy, metrics.maxCombo), [accuracy, metrics.maxCombo, metrics.score]);
+  const romajiCandidates = useMemo(() => buildRomajiOptions(currentPrompt.reading), [currentPrompt.reading]);
+  const romajiGuide = useMemo(() => getRomajiGuide(romajiCandidates, input), [input, romajiCandidates]);
   const comboCallout = getComboCallout(metrics.combo);
   const auraClass = metrics.combo >= 18 ? "combo-legend" : metrics.combo >= 10 ? "combo-hot" : "";
 
@@ -385,6 +419,13 @@ export function NinjaTypingGame() {
     }
   }, [audio, difficulty]);
 
+  const selectDifficultyByOffset = useCallback((offset: number) => {
+    setDifficulty((current) => {
+      const index = DIFFICULTY_ORDER.indexOf(current);
+      return DIFFICULTY_ORDER[(index + offset + DIFFICULTY_ORDER.length) % DIFFICULTY_ORDER.length];
+    });
+  }, []);
+
   useEffect(() => {
     if (status !== "playing") {
       return;
@@ -403,10 +444,10 @@ export function NinjaTypingGame() {
   }, [finishGame, status]);
 
   const startGame = useCallback(() => {
-    const firstWord = pickWord(difficulty, currentWord);
+    const firstPrompt = pickWord(difficulty, currentPrompt);
 
     setStatus("playing");
-    setCurrentWord(firstWord);
+    setCurrentPrompt(firstPrompt);
     setInput("");
     setMetrics(initialMetrics);
     setTimeLeft(GAME_TIME_SECONDS);
@@ -421,7 +462,7 @@ export function NinjaTypingGame() {
     endAtRef.current = Date.now() + GAME_TIME_SECONDS * 1000;
     audio.play("start");
     audio.startAmbient();
-  }, [audio, currentWord, difficulty]);
+  }, [audio, currentPrompt, difficulty]);
 
   const returnToTitle = useCallback(() => {
     audio.stopAmbient();
@@ -434,7 +475,7 @@ export function NinjaTypingGame() {
   }, [audio]);
 
   const completeWord = useCallback(
-    (completedWord: string) => {
+    (completedPrompt: TypingPrompt) => {
       setIsResolving(true);
       setScreenShake(true);
       setAttackId((value) => value + 1);
@@ -459,7 +500,7 @@ export function NinjaTypingGame() {
           return;
         }
 
-        setCurrentWord(pickWord(difficulty, completedWord));
+        setCurrentPrompt(pickWord(difficulty, completedPrompt));
         setInput("");
         setEnemyHit(false);
         setEnemyConfig((value) => createEnemyConfig(value.id + 1));
@@ -472,11 +513,60 @@ export function NinjaTypingGame() {
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
-      if (status !== "playing" || isResolving) {
+      if (event.key === "Escape") {
+        if (status === "playing" || status === "finished") {
+          event.preventDefault();
+          returnToTitle();
+        }
+
         return;
       }
 
       if (event.ctrlKey || event.metaKey || event.altKey) {
+        return;
+      }
+
+      if (status === "idle") {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          startGame();
+          return;
+        }
+
+        if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+          event.preventDefault();
+          selectDifficultyByOffset(1);
+          return;
+        }
+
+        if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+          event.preventDefault();
+          selectDifficultyByOffset(-1);
+          return;
+        }
+
+        if (event.key === "1" || event.key === "2" || event.key === "3") {
+          event.preventDefault();
+          const selectedDifficulty = DIFFICULTY_ORDER[Number(event.key) - 1];
+
+          if (selectedDifficulty) {
+            setDifficulty(selectedDifficulty);
+          }
+        }
+
+        return;
+      }
+
+      if (status === "finished") {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          startGame();
+        }
+
+        return;
+      }
+
+      if (status !== "playing" || isResolving) {
         return;
       }
 
@@ -493,24 +583,22 @@ export function NinjaTypingGame() {
 
       event.preventDefault();
 
-      const expectedChar = currentWord[input.length];
-      const typedChar = event.key;
+      const typedChar = event.key.toLowerCase();
+      const nextInput = input + typedChar;
 
-      if (typedChar === expectedChar) {
-        const nextInput = input + typedChar;
-
+      if (romajiCandidates.some((candidate) => candidate.startsWith(nextInput))) {
         setInput(nextInput);
         setWrongIndex(null);
         addEffect("slash");
         audio.play("type");
 
-        if (nextInput === currentWord) {
+        if (romajiCandidates.includes(nextInput)) {
           setMetrics((previous) => {
             const nextCombo = previous.combo + 1;
 
             return {
               ...previous,
-              score: previous.score + calculateWordScore(currentWord, difficulty, nextCombo),
+              score: previous.score + calculateWordScore(currentPrompt.reading, difficulty, nextCombo),
               combo: nextCombo,
               maxCombo: Math.max(previous.maxCombo, nextCombo),
               correctKeys: previous.correctKeys + 1,
@@ -518,7 +606,7 @@ export function NinjaTypingGame() {
               clearedWords: previous.clearedWords + 1
             };
           });
-          completeWord(currentWord);
+          completeWord(currentPrompt);
           return;
         }
 
@@ -543,7 +631,20 @@ export function NinjaTypingGame() {
       window.setTimeout(() => setWrongIndex(null), 210);
       window.setTimeout(() => setScreenShake(false), 180);
     },
-    [addEffect, audio, completeWord, currentWord, difficulty, input, isResolving, status]
+    [
+      addEffect,
+      audio,
+      completeWord,
+      currentPrompt,
+      difficulty,
+      input,
+      isResolving,
+      returnToTitle,
+      romajiCandidates,
+      selectDifficultyByOffset,
+      startGame,
+      status
+    ]
   );
 
   useEffect(() => {
@@ -737,8 +838,15 @@ export function NinjaTypingGame() {
                     ) : null}
                   </AnimatePresence>
 
-                  <div className="word-display" aria-label={`Type ${currentWord}`} style={{ fontSize: getWordFontSize(currentWord.length) }}>
-                    {currentWord.split("").map((char, index) => renderChar(char, index, input, wrongIndex))}
+                  <div className="prompt-stack">
+                    <div className="kana-guide">{currentPrompt.reading}</div>
+                    <div className="japanese-prompt" style={{ fontSize: getJapaneseFontSize(currentPrompt.text.length) }}>
+                      {currentPrompt.text}
+                    </div>
+                  </div>
+
+                  <div className="word-display" aria-label={`Type ${romajiGuide}`} style={{ fontSize: getWordFontSize(romajiGuide.length) }}>
+                    {romajiGuide.split("").map((char, index) => renderChar(char, index, input, wrongIndex))}
                   </div>
                   <div className="input-readout">
                     <span>INPUT</span>
