@@ -25,6 +25,7 @@ import {
 import { buildRomajiOptions, getRomajiGuide } from "@/lib/romaji";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import type { LeaderboardRecord } from "@/types/leaderboard";
+import { createGameShareUrl, createScoreShareUrl, openShareUrl } from "@/utils/share";
 
 type VisualEffect = {
   id: number;
@@ -34,7 +35,7 @@ type VisualEffect = {
   rotate: number;
 };
 
-type AudioKind = "type" | "miss" | "clear" | "hit" | "start" | "tap";
+type AudioKind = "type" | "miss" | "clear" | "hit" | "start" | "tap" | "finish";
 
 type EnemyConfig = {
   id: number;
@@ -190,6 +191,41 @@ function useNinjaAudio(enabled: boolean) {
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
         oscillator.start(now);
         oscillator.stop(now + 0.25);
+        return;
+      }
+
+      if (kind === "finish") {
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(740, now);
+        oscillator.frequency.exponentialRampToValueAtTime(330, now + 0.34);
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.42);
+        oscillator.start(now);
+        oscillator.stop(now + 0.44);
+
+        const second = context.createOscillator();
+        const secondGain = context.createGain();
+        second.connect(secondGain);
+        secondGain.connect(context.destination);
+        second.type = "triangle";
+        second.frequency.setValueAtTime(980, now + 0.1);
+        second.frequency.exponentialRampToValueAtTime(490, now + 0.42);
+        secondGain.gain.setValueAtTime(0.07, now + 0.1);
+        secondGain.gain.exponentialRampToValueAtTime(0.001, now + 0.46);
+        second.start(now + 0.1);
+        second.stop(now + 0.48);
+
+        const low = context.createOscillator();
+        const lowGain = context.createGain();
+        low.connect(lowGain);
+        lowGain.connect(context.destination);
+        low.type = "sine";
+        low.frequency.setValueAtTime(180, now + 0.16);
+        low.frequency.exponentialRampToValueAtTime(92, now + 0.6);
+        lowGain.gain.setValueAtTime(0.06, now + 0.16);
+        lowGain.gain.exponentialRampToValueAtTime(0.001, now + 0.64);
+        low.start(now + 0.16);
+        low.stop(now + 0.66);
         return;
       }
 
@@ -500,6 +536,7 @@ export function NinjaTypingGame() {
   const metricsRef = useRef(metrics);
   const statusRef = useRef(status);
   const effectIdRef = useRef(0);
+  const shareLockRef = useRef(0);
   const audio = useNinjaAudio(soundEnabled);
 
   const accuracy = useMemo(() => calculateAccuracy(metrics.correctKeys, metrics.totalKeys), [metrics.correctKeys, metrics.totalKeys]);
@@ -629,6 +666,11 @@ export function NinjaTypingGame() {
   }, []);
 
   const finishGame = useCallback(() => {
+    if (statusRef.current !== "playing") {
+      return;
+    }
+
+    statusRef.current = "finished";
     const finalScore = metricsRef.current.score;
 
     setStatus("finished");
@@ -638,6 +680,7 @@ export function NinjaTypingGame() {
     setEnemyHit(false);
     setTimeLeft(0);
     audio.stopAmbient();
+    audio.play("finish");
 
     if (typeof window !== "undefined") {
       const key = getBestScoreKey(difficulty);
@@ -655,6 +698,17 @@ export function NinjaTypingGame() {
       });
     }
   }, [audio, difficulty]);
+
+  const openShareOnce = useCallback((shareUrl: string) => {
+    const now = Date.now();
+
+    if (now - shareLockRef.current < 900) {
+      return;
+    }
+
+    shareLockRef.current = now;
+    openShareUrl(shareUrl);
+  }, []);
 
   const selectDifficultyByOffset = useCallback((offset: number) => {
     setDifficulty((current) => {
@@ -684,6 +738,7 @@ export function NinjaTypingGame() {
     const firstPrompt = pickWord(difficulty, currentPrompt);
     const queuedPrompt = pickWord(difficulty, firstPrompt);
 
+    statusRef.current = "playing";
     setStatus("playing");
     setCurrentPrompt(firstPrompt);
     setNextPrompt(queuedPrompt);
@@ -707,6 +762,7 @@ export function NinjaTypingGame() {
 
   const returnToTitle = useCallback(() => {
     audio.stopAmbient();
+    statusRef.current = "idle";
     setStatus("idle");
     setTimeLeft(GAME_TIME_SECONDS);
     setInput("");
@@ -718,6 +774,7 @@ export function NinjaTypingGame() {
   const openLeaderboard = useCallback(
     (selectedDifficulty: Difficulty = difficulty) => {
       audio.stopAmbient();
+      statusRef.current = "leaderboard";
       setLeaderboardDifficulty(selectedDifficulty);
       setStatus("leaderboard");
       setInput("");
@@ -730,6 +787,7 @@ export function NinjaTypingGame() {
 
   const openAuth = useCallback(() => {
     audio.stopAmbient();
+    statusRef.current = "auth";
     setStatus("auth");
     setInput("");
     setIsResolving(false);
@@ -739,6 +797,7 @@ export function NinjaTypingGame() {
 
   const openHelp = useCallback(() => {
     audio.stopAmbient();
+    statusRef.current = "help";
     setStatus("help");
     setInput("");
     setIsResolving(false);
@@ -996,7 +1055,7 @@ export function NinjaTypingGame() {
   );
 
   return (
-    <main className={`min-h-screen overflow-x-hidden bg-[#05070f] text-slate-100 ${auraClass}`} onPointerDownCapture={handleButtonPointerDown}>
+    <main className={`app-root status-${status} min-h-screen overflow-x-hidden bg-[#05070f] text-slate-100 ${auraClass}`} onPointerDownCapture={handleButtonPointerDown}>
       <div className="scene-bg">
         <div className="moon" />
         <div className="castle">
@@ -1116,6 +1175,9 @@ export function NinjaTypingGame() {
                   </button>
                   <button className="ghost-button compact-button" type="button" onClick={openHelp}>
                     遊び方
+                  </button>
+                  <button className="x-share-button compact-button" type="button" onClick={() => openShareOnce(createGameShareUrl())}>
+                    Xでシェア
                   </button>
                 </div>
               </div>
@@ -1288,6 +1350,23 @@ export function NinjaTypingGame() {
                 </button>
                 <button className="ghost-button" type="button" onClick={returnToTitle}>
                   タイトル
+                </button>
+                <button
+                  className="x-share-button"
+                  type="button"
+                  onClick={() =>
+                    openShareOnce(
+                      createScoreShareUrl({
+                        score: metrics.score,
+                        accuracy,
+                        maxCombo: metrics.maxCombo,
+                        difficulty: DIFFICULTIES[difficulty].label,
+                        rank: rank.title
+                      })
+                    )
+                  }
+                >
+                  スコアをXでシェア
                 </button>
               </div>
             </motion.section>

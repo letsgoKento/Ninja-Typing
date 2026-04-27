@@ -157,6 +157,21 @@ button {
   min-height: calc(100dvh - clamp(28px, 4vh, 48px));
 }
 
+.status-playing .app-shell {
+  height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
+}
+
+.status-playing .app-content {
+  height: 100%;
+  min-height: 0;
+}
+
+.status-playing header {
+  flex: 0 0 auto;
+}
+
 .ad-rail {
   position: sticky;
   top: clamp(14px, 2vh, 24px);
@@ -425,7 +440,8 @@ button {
 
 .start-button,
 .ghost-button,
-.icon-button {
+.icon-button,
+.x-share-button {
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 14px;
   font-weight: 950;
@@ -444,7 +460,8 @@ button {
 
 .start-button:hover,
 .ghost-button:hover,
-.icon-button:hover {
+.icon-button:hover,
+.x-share-button:hover {
   transform: translateY(-2px);
 }
 
@@ -458,9 +475,21 @@ button {
   color: #e2e8f0;
 }
 
-.ghost-button {
+.ghost-button,
+.x-share-button {
   min-width: 132px;
   padding: 1rem 1.35rem;
+}
+
+.x-share-button {
+  background: linear-gradient(135deg, rgba(2, 6, 23, 0.96), rgba(15, 23, 42, 0.92));
+  box-shadow: 0 0 0 rgba(255, 255, 255, 0), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.x-share-button:hover {
+  border-color: rgba(255, 255, 255, 0.38);
+  box-shadow: 0 0 28px rgba(255, 255, 255, 0.12), 0 0 30px rgba(34, 211, 238, 0.16);
 }
 
 .icon-button {
@@ -499,9 +528,9 @@ button {
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 18px;
+  gap: clamp(8px, 1.5vh, 16px);
   min-height: 0;
-  padding: clamp(28px, 4vh, 44px) 0 28px;
+  padding: clamp(10px, 2vh, 22px) 0 clamp(10px, 1.8vh, 20px);
 }
 
 .hud-grid,
@@ -554,11 +583,13 @@ button {
 
 .arena-panel {
   position: relative;
+  display: flex;
   flex: 1;
-  min-height: clamp(460px, calc(100dvh - 300px), 560px);
+  flex-direction: column;
+  min-height: 0;
   overflow: hidden;
   border-radius: 28px;
-  padding: clamp(18px, 3vw, 30px);
+  padding: clamp(14px, 2.2vh, 26px) clamp(16px, 3vw, 30px) clamp(14px, 2.1vh, 24px);
 }
 
 .arena-panel::before {
@@ -588,9 +619,10 @@ button {
   position: relative;
   z-index: 1;
   display: grid;
+  flex: 1 1 clamp(175px, 30dvh, 310px);
   grid-template-columns: minmax(160px, 0.72fr) minmax(220px, 1fr) minmax(160px, 0.72fr);
   align-items: center;
-  min-height: 310px;
+  min-height: 0;
   isolation: isolate;
 }
 
@@ -609,7 +641,7 @@ button {
   position: relative;
   display: grid;
   place-items: center;
-  min-height: 240px;
+  min-height: clamp(145px, 24dvh, 240px);
 }
 
 .ninja-aura {
@@ -625,7 +657,7 @@ button {
 
 .ninja-svg {
   position: relative;
-  width: clamp(158px, 17vw, 230px);
+  width: clamp(128px, 15vw, 220px);
   max-width: 100%;
   filter: drop-shadow(0 28px 40px rgba(0, 0, 0, 0.5));
 }
@@ -635,7 +667,7 @@ button {
   z-index: 4;
   display: grid;
   place-items: center;
-  width: clamp(112px, 13vw, 174px);
+  width: clamp(92px, 11vw, 164px);
   aspect-ratio: 1;
   pointer-events: none;
 }
@@ -887,21 +919,23 @@ button {
   position: relative;
   z-index: 2;
   display: grid;
-  gap: 14px;
-  margin-top: 10px;
+  flex: 0 0 auto;
+  gap: clamp(8px, 1.4vh, 14px);
+  margin-top: clamp(4px, 0.8vh, 10px);
 }
 
 .prompt-row {
+  position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(180px, 280px);
-  align-items: center;
-  gap: clamp(12px, 2.2vw, 28px);
-  min-height: 146px;
+  grid-template-columns: minmax(0, 1fr);
+  place-items: center;
+  min-height: clamp(96px, 15dvh, 146px);
+  padding-inline: min(24vw, 300px);
 }
 
 .prompt-stack {
   display: grid;
-  min-height: 128px;
+  min-height: clamp(86px, 13dvh, 128px);
   place-items: center;
   gap: 0.4rem;
   padding: 0.8rem 0.5rem 0;
@@ -909,7 +943,9 @@ button {
 }
 
 .current-prompt-card {
+  justify-self: center;
   min-width: 0;
+  width: min(100%, 760px);
 }
 
 .kana-guide {
@@ -933,11 +969,14 @@ button {
 }
 
 .next-prompt-preview {
+  position: absolute;
+  top: 50%;
+  right: 0;
   display: grid;
   grid-template-columns: 1fr;
   align-items: center;
-  justify-self: stretch;
   gap: 0.25rem;
+  width: min(24vw, 280px);
   max-width: 280px;
   border: 1px solid rgba(103, 232, 249, 0.16);
   border-radius: 20px;
@@ -947,6 +986,7 @@ button {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
   padding: 0.8rem 0.95rem;
   text-align: left;
+  transform: translateY(-50%);
 }
 
 .next-prompt-preview span {
@@ -979,7 +1019,8 @@ button {
 
 .word-display {
   display: flex;
-  min-height: 90px;
+  width: 100%;
+  min-height: clamp(62px, 10dvh, 90px);
   align-items: center;
   justify-content: center;
   flex-wrap: nowrap;
@@ -989,7 +1030,8 @@ button {
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   background: linear-gradient(90deg, transparent, rgba(15, 23, 42, 0.55), transparent);
-  padding: clamp(1rem, 2.5vw, 1.7rem);
+  padding: clamp(0.65rem, 1.6vh, 1.35rem) clamp(0.85rem, 2.4vw, 1.7rem);
+  text-align: center;
 }
 
 .word-char {
@@ -1895,15 +1937,20 @@ button {
   .prompt-row {
     grid-template-columns: 1fr;
     min-height: 0;
+    padding-inline: 0;
   }
 
   .next-prompt-preview {
+    position: relative;
+    top: auto;
+    right: auto;
     width: min(100%, 360px);
     max-width: 100%;
     justify-self: center;
     justify-items: center;
     border-radius: 16px;
     text-align: center;
+    transform: none;
   }
 
   .next-prompt-preview em {
@@ -1957,7 +2004,8 @@ button {
   }
 
   .start-button,
-  .ghost-button {
+  .ghost-button,
+  .x-share-button {
     width: 100%;
   }
 }
@@ -1968,9 +2016,28 @@ button {
     padding-bottom: 14px;
   }
 
+  .status-playing .app-shell {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
+  .status-playing header h1 {
+    margin-top: 0.22rem;
+    font-size: clamp(1.25rem, 2vw, 1.7rem);
+  }
+
+  .status-playing header p {
+    font-size: 0.66rem;
+    letter-spacing: 0.28em;
+  }
+
+  .status-playing .icon-button {
+    padding: 0.62rem 0.78rem;
+  }
+
   .game-layout {
     gap: 10px;
-    padding: 16px 0 12px;
+    padding: 10px 0 8px;
   }
 
   .hud-grid {
@@ -1988,41 +2055,129 @@ button {
   }
 
   .arena-panel {
-    min-height: auto;
-    padding: 16px 24px 18px;
+    min-height: 0;
+    padding: 12px 20px 14px;
   }
 
   .stage {
-    min-height: clamp(190px, 28dvh, 250px);
+    flex-basis: clamp(150px, 25dvh, 230px);
+    min-height: 0;
   }
 
   .ninja-wrap {
-    min-height: 178px;
+    min-height: clamp(128px, 21dvh, 178px);
   }
 
   .ninja-svg {
-    width: clamp(132px, 13vw, 180px);
+    width: clamp(112px, 12vw, 170px);
   }
 
   .enemy-wrap {
-    width: clamp(96px, 10vw, 140px);
+    width: clamp(82px, 9vw, 132px);
   }
 
   .prompt-row {
-    min-height: 112px;
+    min-height: clamp(82px, 14dvh, 108px);
   }
 
   .prompt-stack {
-    min-height: 104px;
+    min-height: clamp(76px, 12dvh, 98px);
     padding-top: 0.2rem;
   }
 
+  .japanese-prompt {
+    font-size: clamp(2.05rem, 7dvh, 4rem) !important;
+  }
+
   .word-display {
-    min-height: 66px;
-    padding: 0.8rem 1rem;
+    font-size: clamp(1.5rem, 5.8dvh, 3.25rem) !important;
+    min-height: clamp(54px, 8dvh, 64px);
+    padding: 0.55rem 1rem;
   }
 
   .timer-track {
     height: 8px;
+  }
+}
+
+@media (max-height: 680px) and (min-width: 721px) {
+  .status-playing header h1 {
+    font-size: clamp(1.08rem, 1.7vw, 1.42rem);
+  }
+
+  .status-playing header p {
+    font-size: 0.6rem;
+  }
+
+  .status-playing .header-actions {
+    gap: 0.45rem;
+  }
+
+  .status-playing .icon-button {
+    border-radius: 12px;
+    padding: 0.5rem 0.68rem;
+  }
+
+  .stat-tile {
+    min-height: 56px;
+    padding: 0.55rem 0.72rem;
+  }
+
+  .stat-tile span {
+    font-size: 0.64rem;
+  }
+
+  .stat-tile strong {
+    font-size: clamp(1.08rem, 2.1vw, 1.62rem);
+  }
+
+  .arena-topline {
+    font-size: 0.66rem;
+  }
+
+  .stage {
+    flex-basis: clamp(122px, 22dvh, 168px);
+  }
+
+  .ninja-wrap {
+    min-height: 118px;
+  }
+
+  .ninja-svg {
+    width: clamp(96px, 10vw, 138px);
+  }
+
+  .enemy-wrap {
+    width: clamp(72px, 8vw, 112px);
+  }
+
+  .prompt-row {
+    min-height: clamp(70px, 13dvh, 88px);
+  }
+
+  .prompt-stack {
+    min-height: clamp(66px, 11dvh, 82px);
+  }
+
+  .kana-guide {
+    font-size: 0.82rem;
+  }
+
+  .japanese-prompt {
+    font-size: clamp(1.75rem, 6.2dvh, 3.15rem) !important;
+  }
+
+  .next-prompt-preview {
+    padding: 0.62rem 0.72rem;
+  }
+
+  .word-display {
+    font-size: clamp(1.28rem, 5dvh, 2.48rem) !important;
+    min-height: 48px;
+    padding: 0.45rem 0.85rem;
+  }
+
+  .input-readout {
+    font-size: 0.76rem;
   }
 }
