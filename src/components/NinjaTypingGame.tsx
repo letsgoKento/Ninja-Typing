@@ -15,9 +15,12 @@ import {
   getBestScoreKey,
   getComboCallout,
   getRank,
+  getUnlockedRanksKey,
   initialMetrics,
+  RANKS,
   type GameStatus,
-  type Metrics
+  type Metrics,
+  type RankDefinition
 } from "@/lib/game";
 import { buildRomajiOptions, getRomajiGuide } from "@/lib/romaji";
 import { getSupabaseClient } from "@/lib/supabaseClient";
@@ -47,8 +50,10 @@ const SPACE_MARK = "\u00a0";
 
 const COPY = {
   countdown: "60\u79d2\u3067\u4f55\u4f53\u5012\u305b\u308b\u304b",
+  heroLine1: "忍者!!",
+  heroLine2: "タイピング",
   intro:
-    "\u8868\u793a\u3055\u308c\u305f\u5358\u8a9e\u3092\u6b63\u78ba\u306b\u5165\u529b\u3059\u308b\u3068\u3001\u5fcd\u8005\u304c\u624b\u88cf\u5263\u3067\u6575\u3092\u6483\u7834\u3002\u30df\u30b9\u306a\u304f\u7d9a\u3051\u308b\u307b\u3069\u30b3\u30f3\u30dc\u500d\u7387\u3068\u6f14\u51fa\u304c\u4e0a\u304c\u308a\u307e\u3059\u3002",
+    "表示された読みをローマ字で斬るように入力。正確に打ち切るたび、忍者が手裏剣で敵を撃破。連撃を重ねるほどコンボ倍率と演出が研ぎ澄まされます。",
   correctGlow: "\u6b63\u3057\u3044\u6587\u5b57\u306f\u767a\u5149",
   missShake: "\u30df\u30b9\u3067\u753b\u9762\u30b7\u30a7\u30a4\u30af",
   bestSaved: "\u6700\u9ad8\u30b9\u30b3\u30a2\u4fdd\u5b58",
@@ -62,6 +67,7 @@ const COPY = {
 };
 
 const DIFFICULTY_ORDER: Difficulty[] = ["easy", "normal", "hard"];
+const RANK_ID_SET = new Set(RANKS.map((rank) => rank.id));
 const enemyNames = ["ONI", "AKA NINJA", "KAGE ONI", "ROGUE", "SHADOW"];
 
 function createEnemyConfig(id: number): EnemyConfig {
@@ -243,6 +249,51 @@ function StatTile({
   );
 }
 
+function formatRankRange(rank: RankDefinition) {
+  const min = rank.minScore.toLocaleString();
+
+  if (rank.maxScore === null) {
+    return `${min}+`;
+  }
+
+  return `${min} - ${rank.maxScore.toLocaleString()}`;
+}
+
+function RankGallery({ unlockedRankIds }: { unlockedRankIds: string[] }) {
+  const unlockedSet = new Set(unlockedRankIds);
+  const unlockedCount = unlockedRankIds.filter((id) => RANK_ID_SET.has(id)).length;
+
+  return (
+    <div className="rank-gallery">
+      <div className="rank-gallery-header">
+        <div>
+          <p className="panel-kicker">Rank Archive</p>
+          <h3>称号一覧</h3>
+        </div>
+        <span>
+          {unlockedCount} / {RANKS.length}
+        </span>
+      </div>
+
+      <div className="rank-gallery-list">
+        {RANKS.map((rank) => {
+          const unlocked = unlockedSet.has(rank.id);
+
+          return (
+            <div key={rank.id} className={`rank-gallery-item ${unlocked ? "rank-unlocked" : "rank-locked"}`}>
+              <div>
+                <strong>{unlocked ? rank.title : "???"}</strong>
+                <em>{unlocked ? rank.subtitle : "未解除"}</em>
+              </div>
+              <span>{formatRankRange(rank)}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function AccountScreen({
   session,
   username,
@@ -307,7 +358,7 @@ function HowToPlayPanel() {
 
       <div className="help-score-strip">
         <span>Base: 85 + 読みの長さ x 16</span>
-        <span>Combo: 5連ごとに +18%</span>
+        <span>Combo: 1連ごとに +10%</span>
         <span>Difficulty: Easy x1 / Normal x1.25 / Hard x1.55</span>
       </div>
     </div>
@@ -444,6 +495,7 @@ export function NinjaTypingGame() {
   const [submittedLeaderboardId, setSubmittedLeaderboardId] = useState<string | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [username, setUsername] = useState("");
+  const [unlockedRankIds, setUnlockedRankIds] = useState<string[]>([]);
   const endAtRef = useRef(0);
   const metricsRef = useRef(metrics);
   const statusRef = useRef(status);
@@ -451,7 +503,7 @@ export function NinjaTypingGame() {
   const audio = useNinjaAudio(soundEnabled);
 
   const accuracy = useMemo(() => calculateAccuracy(metrics.correctKeys, metrics.totalKeys), [metrics.correctKeys, metrics.totalKeys]);
-  const rank = useMemo(() => getRank(metrics.score, accuracy, metrics.maxCombo), [accuracy, metrics.maxCombo, metrics.score]);
+  const rank = useMemo(() => getRank(metrics.score), [metrics.score]);
   const romajiCandidates = useMemo(() => buildRomajiOptions(currentPrompt.reading), [currentPrompt.reading]);
   const romajiGuide = useMemo(() => getRomajiGuide(romajiCandidates, input), [input, romajiCandidates]);
   const comboCallout = getComboCallout(metrics.combo);
@@ -518,6 +570,46 @@ export function NinjaTypingGame() {
     setBestScore(savedScore ? Number(savedScore) : 0);
   }, [difficulty]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const savedRanks = window.localStorage.getItem(getUnlockedRanksKey());
+    const bestScoreRanks = DIFFICULTY_ORDER.flatMap((item) => {
+      const savedScore = window.localStorage.getItem(getBestScoreKey(item));
+
+      if (savedScore === null) {
+        return [];
+      }
+
+      const score = Number(savedScore);
+      return RANKS.filter((rankItem) => score >= rankItem.minScore).map((rankItem) => rankItem.id);
+    });
+
+    if (!savedRanks) {
+      const initialRanks = Array.from(new Set(bestScoreRanks));
+      setUnlockedRankIds(initialRanks);
+      window.localStorage.setItem(getUnlockedRanksKey(), JSON.stringify(initialRanks));
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(savedRanks);
+
+      if (Array.isArray(parsed)) {
+        const savedValidRanks = parsed.filter((value): value is string => typeof value === "string" && RANK_ID_SET.has(value));
+        const merged = Array.from(new Set([...savedValidRanks, ...bestScoreRanks]));
+        setUnlockedRankIds(merged);
+        window.localStorage.setItem(getUnlockedRanksKey(), JSON.stringify(merged));
+      }
+    } catch {
+      const fallbackRanks = Array.from(new Set(bestScoreRanks));
+      setUnlockedRankIds(fallbackRanks);
+      window.localStorage.setItem(getUnlockedRanksKey(), JSON.stringify(fallbackRanks));
+    }
+  }, []);
+
   const addEffect = useCallback((type: VisualEffect["type"], position?: Pick<VisualEffect, "left" | "top">) => {
     const id = effectIdRef.current + 1;
     effectIdRef.current = id;
@@ -554,6 +646,13 @@ export function NinjaTypingGame() {
       window.localStorage.setItem(key, String(nextBest));
       setLastRunWasBest(finalScore > previousBest);
       setBestScore(nextBest);
+
+      const newlyUnlocked = RANKS.filter((item) => finalScore >= item.minScore).map((item) => item.id);
+      setUnlockedRankIds((previous) => {
+        const merged = Array.from(new Set([...previous.filter((item) => RANK_ID_SET.has(item)), ...newlyUnlocked]));
+        window.localStorage.setItem(getUnlockedRanksKey(), JSON.stringify(merged));
+        return merged;
+      });
     }
   }, [audio, difficulty]);
 
@@ -910,7 +1009,13 @@ export function NinjaTypingGame() {
         <div className="scanline" />
       </div>
 
-      <div className={`relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col px-5 py-6 sm:px-8 lg:px-10 ${screenShake ? "screen-shake" : ""}`}>
+      <div className="app-shell">
+        <aside className="ad-rail ad-rail-left" aria-label="広告スペース">
+          <span>AD</span>
+          <strong>広告スペース</strong>
+        </aside>
+
+        <div className={`app-content ${screenShake ? "screen-shake" : ""}`}>
         <header className="flex items-center justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.38em] text-cyan-200/80">Cyber Shinobi Drill</p>
@@ -958,9 +1063,10 @@ export function NinjaTypingGame() {
                 <p className="inline-flex rounded-full border border-cyan-300/25 bg-cyan-300/10 px-4 py-2 text-sm font-bold text-cyan-100 shadow-neon-cyan">
                   {COPY.countdown}
                 </p>
-                <h2 className="mt-7 max-w-3xl text-5xl font-black leading-[0.98] tracking-normal text-white sm:text-6xl lg:text-7xl">
-                  Type clean.
-                  <span className="block text-cyan-200">Strike sharp.</span>
+                <h2 className="hero-title">
+                  <span className="hero-word-primary">{COPY.heroLine1}</span>
+                  <span className="hero-divider">/</span>
+                  <span className="hero-word-secondary">{COPY.heroLine2}</span>
                 </h2>
                 <p className="mt-6 max-w-2xl text-base leading-8 text-slate-300 sm:text-lg">{COPY.intro}</p>
                 <div className="mt-8 flex flex-wrap items-center gap-3 text-sm text-slate-300">
@@ -968,11 +1074,12 @@ export function NinjaTypingGame() {
                   <span className="info-pill">{COPY.missShake}</span>
                   <span className="info-pill">{COPY.bestSaved}</span>
                 </div>
+                <RankGallery unlockedRankIds={unlockedRankIds} />
               </div>
 
               <div className="start-panel">
                 <div>
-                  <p className="text-sm font-bold uppercase tracking-[0.28em] text-amber-200/90">Difficulty</p>
+                  <p className="text-sm font-bold uppercase tracking-[0.28em] text-amber-200/90">難易度</p>
                   <div className="mt-4 grid gap-3">
                     {(Object.keys(DIFFICULTIES) as Difficulty[]).map((key) => {
                       const item = DIFFICULTIES[key];
@@ -998,11 +1105,11 @@ export function NinjaTypingGame() {
 
                 <div className="mt-7 flex flex-wrap items-end justify-between gap-4 border-t border-white/10 pt-6">
                   <div>
-                    <span className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">Best</span>
+                    <span className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">最高スコア</span>
                     <p className="mt-1 text-3xl font-black text-amber-200">{bestScore.toLocaleString()}</p>
                   </div>
                   <button className="start-button" type="button" onClick={startGame}>
-                    Start
+                    開始
                   </button>
                   <button className="ghost-button compact-button" type="button" onClick={() => openLeaderboard(difficulty)}>
                     ランキング
@@ -1103,10 +1210,12 @@ export function NinjaTypingGame() {
                     ) : null}
                   </AnimatePresence>
 
-                  <div className="prompt-stack">
-                    <div className="kana-guide">{currentPrompt.reading}</div>
-                    <div className="japanese-prompt" style={{ fontSize: getJapaneseFontSize(currentPrompt.text.length) }}>
-                      {currentPrompt.text}
+                  <div className="prompt-row">
+                    <div className="prompt-stack current-prompt-card">
+                      <div className="kana-guide">{currentPrompt.reading}</div>
+                      <div className="japanese-prompt" style={{ fontSize: getJapaneseFontSize(currentPrompt.text.length) }}>
+                        {currentPrompt.text}
+                      </div>
                     </div>
                     <div className="next-prompt-preview">
                       <span>次のお題</span>
@@ -1137,9 +1246,13 @@ export function NinjaTypingGame() {
               transition={{ duration: 0.28 }}
             >
               <div className="rank-panel">
-                <span className="text-sm font-bold uppercase tracking-[0.32em] text-cyan-200">Mission Complete</span>
-                <p className="rank-letter">{rank}</p>
-                <h2 className="mt-2 text-3xl font-black text-white sm:text-4xl">Final Score {metrics.score.toLocaleString()}</h2>
+                <span className="text-sm font-bold uppercase tracking-[0.32em] text-cyan-200">任務完了</span>
+                <div className="rank-letter">
+                  <strong>{rank.title}</strong>
+                  <span>{rank.subtitle}</span>
+                  <em>{formatRankRange(rank)}</em>
+                </div>
+                <h2 className="mt-2 text-3xl font-black text-white sm:text-4xl">最終スコア {metrics.score.toLocaleString()}</h2>
                 <p className="mt-3 text-slate-300">
                   {lastRunWasBest ? COPY.bestUpdated : `Best ${bestScore.toLocaleString()} ${COPY.bestChase}`}
                 </p>
@@ -1248,6 +1361,12 @@ export function NinjaTypingGame() {
             </motion.section>
           ) : null}
         </AnimatePresence>
+        </div>
+
+        <aside className="ad-rail ad-rail-right" aria-label="広告スペース">
+          <span>AD</span>
+          <strong>広告スペース</strong>
+        </aside>
       </div>
     </main>
   );

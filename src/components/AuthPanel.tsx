@@ -32,6 +32,7 @@ export function AuthPanel({ onAuthChanged, helpText = AUTH_TEXT.needAuth }: Auth
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
@@ -147,7 +148,35 @@ export function AuthPanel({ onAuthChanged, helpText = AUTH_TEXT.needAuth }: Auth
 
         <label className="name-field">
           <span>{AUTH_TEXT.password}</span>
-          <input type="password" value={password} disabled={isBusy} onChange={(event) => setPassword(event.target.value)} />
+          <div className="password-input-wrap">
+            <input
+              type={showPassword ? "text" : "password"}
+              value={password}
+              disabled={isBusy}
+              onChange={(event) => setPassword(event.target.value)}
+            />
+            <button
+              type="button"
+              disabled={isBusy}
+              aria-label={showPassword ? "パスワードを隠す" : "パスワードを表示"}
+              title={showPassword ? "パスワードを隠す" : "パスワードを表示"}
+              onClick={() => setShowPassword((value) => !value)}
+            >
+              {showPassword ? (
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M3 3l18 18" />
+                  <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8" />
+                  <path d="M8.5 5.6A10.7 10.7 0 0 1 12 5c5 0 8.5 4.4 9.5 7a12.2 12.2 0 0 1-2.3 3.4" />
+                  <path d="M6.1 6.8A12 12 0 0 0 2.5 12c1 2.6 4.5 7 9.5 7a10.5 10.5 0 0 0 5-1.3" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M2.5 12c1-2.6 4.5-7 9.5-7s8.5 4.4 9.5 7c-1 2.6-4.5 7-9.5 7s-8.5-4.4-9.5-7Z" />
+                  <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
+                </svg>
+              )}
+            </button>
+          </div>
         </label>
 
         <button className="submit-score-button" type="submit" disabled={isBusy}>
