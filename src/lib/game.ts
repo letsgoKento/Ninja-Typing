@@ -1,6 +1,6 @@
 import { type Difficulty, DIFFICULTIES } from "@/data/wordBank";
 
-export type GameStatus = "idle" | "playing" | "finished";
+export type GameStatus = "idle" | "playing" | "finished" | "leaderboard";
 
 export type Metrics = {
   score: number;

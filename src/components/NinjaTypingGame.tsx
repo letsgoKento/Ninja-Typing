@@ -2,6 +2,8 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Leaderboard } from "@/components/Leaderboard";
+import { ScoreSubmitForm } from "@/components/ScoreSubmitForm";
 import { DIFFICULTIES, type Difficulty, GAME_TIME_SECONDS, type TypingPrompt } from "@/data/wordBank";
 import {
   calculateAccuracy,
@@ -14,6 +16,7 @@ import {
   type Metrics
 } from "@/lib/game";
 import { buildRomajiOptions, getRomajiGuide } from "@/lib/romaji";
+import type { LeaderboardRecord } from "@/types/leaderboard";
 
 type VisualEffect = {
   id: number;
@@ -345,6 +348,8 @@ export function NinjaTypingGame() {
   const [isResolving, setIsResolving] = useState(false);
   const [screenShake, setScreenShake] = useState(false);
   const [lastRunWasBest, setLastRunWasBest] = useState(false);
+  const [leaderboardDifficulty, setLeaderboardDifficulty] = useState<Difficulty>("normal");
+  const [submittedLeaderboardId, setSubmittedLeaderboardId] = useState<string | null>(null);
   const endAtRef = useRef(0);
   const metricsRef = useRef(metrics);
   const statusRef = useRef(status);
@@ -403,6 +408,7 @@ export function NinjaTypingGame() {
     const finalScore = metricsRef.current.score;
 
     setStatus("finished");
+    setLeaderboardDifficulty(difficulty);
     setIsResolving(false);
     setInput("");
     setEnemyHit(false);
@@ -459,6 +465,8 @@ export function NinjaTypingGame() {
     setIsResolving(false);
     setScreenShake(false);
     setLastRunWasBest(false);
+    setSubmittedLeaderboardId(null);
+    setLeaderboardDifficulty(difficulty);
     endAtRef.current = Date.now() + GAME_TIME_SECONDS * 1000;
     audio.play("start");
     audio.startAmbient();
@@ -473,6 +481,24 @@ export function NinjaTypingGame() {
     setWrongIndex(null);
     setEnemyHit(false);
   }, [audio]);
+
+  const openLeaderboard = useCallback(
+    (selectedDifficulty: Difficulty = difficulty) => {
+      audio.stopAmbient();
+      setLeaderboardDifficulty(selectedDifficulty);
+      setStatus("leaderboard");
+      setInput("");
+      setIsResolving(false);
+      setWrongIndex(null);
+      setEnemyHit(false);
+    },
+    [audio, difficulty]
+  );
+
+  const handleLeaderboardSubmitted = useCallback((record: LeaderboardRecord) => {
+    setSubmittedLeaderboardId(record.id);
+    setLeaderboardDifficulty(record.difficulty);
+  }, []);
 
   const completeWord = useCallback(
     (completedPrompt: TypingPrompt) => {
@@ -514,7 +540,7 @@ export function NinjaTypingGame() {
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        if (status === "playing" || status === "finished") {
+        if (status === "playing" || status === "finished" || status === "leaderboard") {
           event.preventDefault();
           returnToTitle();
         }
@@ -523,6 +549,17 @@ export function NinjaTypingGame() {
       }
 
       if (event.ctrlKey || event.metaKey || event.altKey) {
+        return;
+      }
+
+      const target = event.target as HTMLElement | null;
+      const isEditableTarget =
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement ||
+        Boolean(target?.isContentEditable);
+
+      if (isEditableTarget) {
         return;
       }
 
@@ -552,6 +589,11 @@ export function NinjaTypingGame() {
           if (selectedDifficulty) {
             setDifficulty(selectedDifficulty);
           }
+        }
+
+        if (event.key.toLowerCase() === "l") {
+          event.preventDefault();
+          openLeaderboard();
         }
 
         return;
@@ -641,6 +683,7 @@ export function NinjaTypingGame() {
       isResolving,
       returnToTitle,
       romajiCandidates,
+      openLeaderboard,
       selectDifficultyByOffset,
       startGame,
       status
@@ -655,7 +698,7 @@ export function NinjaTypingGame() {
   const progress = Math.max(0, Math.min(100, (timeLeft / GAME_TIME_SECONDS) * 100));
 
   return (
-    <main className={`min-h-screen overflow-hidden bg-[#05070f] text-slate-100 ${auraClass}`}>
+    <main className={`min-h-screen overflow-x-hidden bg-[#05070f] text-slate-100 ${auraClass}`}>
       <div className="scene-bg">
         <div className="moon" />
         <div className="castle">
@@ -674,15 +717,22 @@ export function NinjaTypingGame() {
             <p className="text-xs font-semibold uppercase tracking-[0.38em] text-cyan-200/80">Cyber Shinobi Drill</p>
             <h1 className="mt-2 text-2xl font-black tracking-normal text-white sm:text-3xl">Ninja Typing / {JA_TITLE}</h1>
           </div>
-          <button
-            className="icon-button"
-            type="button"
-            onClick={() => setSoundEnabled((value) => !value)}
-            aria-label={soundEnabled ? "Sound on" : "Sound off"}
-            title={soundEnabled ? "Sound on" : "Sound off"}
-          >
-            {soundEnabled ? "ON" : "OFF"}
-          </button>
+          <div className="header-actions">
+            {status !== "playing" ? (
+              <button className="icon-button wide-icon-button" type="button" onClick={() => openLeaderboard()}>
+                Rank
+              </button>
+            ) : null}
+            <button
+              className="icon-button"
+              type="button"
+              onClick={() => setSoundEnabled((value) => !value)}
+              aria-label={soundEnabled ? "Sound on" : "Sound off"}
+              title={soundEnabled ? "Sound on" : "Sound off"}
+            >
+              {soundEnabled ? "ON" : "OFF"}
+            </button>
+          </div>
         </header>
 
         <AnimatePresence mode="wait">
@@ -744,6 +794,9 @@ export function NinjaTypingGame() {
                   </div>
                   <button className="start-button" type="button" onClick={startGame}>
                     Start
+                  </button>
+                  <button className="ghost-button compact-button" type="button" onClick={() => openLeaderboard(difficulty)}>
+                    Ranking
                   </button>
                 </div>
               </div>
@@ -884,9 +937,45 @@ export function NinjaTypingGame() {
                 <StatTile label="Difficulty" value={DIFFICULTIES[difficulty].label} />
               </div>
 
+              <div className="post-result-grid">
+                <ScoreSubmitForm
+                  score={metrics.score}
+                  accuracy={accuracy}
+                  maxCombo={metrics.maxCombo}
+                  missCount={metrics.misses}
+                  difficulty={difficulty}
+                  onSubmitted={handleLeaderboardSubmitted}
+                />
+                <Leaderboard initialDifficulty={leaderboardDifficulty} highlightId={submittedLeaderboardId} refreshToken={submittedLeaderboardId ?? metrics.score} />
+              </div>
+
               <div className="result-actions">
                 <button className="start-button" type="button" onClick={startGame}>
                   Play Again
+                </button>
+                <button className="ghost-button" type="button" onClick={() => openLeaderboard(difficulty)}>
+                  Ranking
+                </button>
+                <button className="ghost-button" type="button" onClick={returnToTitle}>
+                  Title
+                </button>
+              </div>
+            </motion.section>
+          ) : null}
+
+          {status === "leaderboard" ? (
+            <motion.section
+              key="leaderboard"
+              className="leaderboard-layout"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -16 }}
+              transition={{ duration: 0.28 }}
+            >
+              <Leaderboard initialDifficulty={leaderboardDifficulty} highlightId={submittedLeaderboardId} refreshToken={submittedLeaderboardId ?? "leaderboard"} />
+              <div className="result-actions">
+                <button className="start-button" type="button" onClick={startGame}>
+                  Play
                 </button>
                 <button className="ghost-button" type="button" onClick={returnToTitle}>
                   Title
