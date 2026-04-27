@@ -482,14 +482,82 @@ button {
 }
 
 .x-share-button {
-  background: linear-gradient(135deg, rgba(2, 6, 23, 0.96), rgba(15, 23, 42, 0.92));
-  box-shadow: 0 0 0 rgba(255, 255, 255, 0), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.64rem;
+  overflow: hidden;
+  border-color: rgba(255, 255, 255, 0.78);
+  background:
+    radial-gradient(circle at 22% 18%, rgba(255, 255, 255, 0.18), transparent 0 22%, transparent 23%),
+    linear-gradient(135deg, #050505 0%, #111827 46%, #020617 100%);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 16px 38px rgba(0, 0, 0, 0.48),
+    0 0 34px rgba(255, 255, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
   color: #ffffff;
+  text-shadow: 0 0 16px rgba(255, 255, 255, 0.38);
+}
+
+.x-share-button::before {
+  position: absolute;
+  inset: -1px;
+  z-index: 0;
+  content: "";
+  background:
+    linear-gradient(110deg, transparent 0 18%, rgba(255, 255, 255, 0.2) 26%, transparent 34%),
+    radial-gradient(circle at 84% 18%, rgba(34, 211, 238, 0.22), transparent 0 26%, transparent 27%);
+  opacity: 0.9;
+}
+
+.x-share-button::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: linear-gradient(115deg, transparent 0 42%, rgba(255, 255, 255, 0.24) 48%, transparent 56%);
+  opacity: 0;
+  transform: translateX(-70%);
+  transition: opacity 180ms ease, transform 360ms ease;
 }
 
 .x-share-button:hover {
-  border-color: rgba(255, 255, 255, 0.38);
-  box-shadow: 0 0 28px rgba(255, 255, 255, 0.12), 0 0 30px rgba(34, 211, 238, 0.16);
+  border-color: rgba(255, 255, 255, 0.95);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.16),
+    0 18px 46px rgba(0, 0, 0, 0.55),
+    0 0 36px rgba(255, 255, 255, 0.18),
+    0 0 34px rgba(34, 211, 238, 0.2);
+}
+
+.x-share-button:hover::after {
+  opacity: 1;
+  transform: translateX(72%);
+}
+
+.x-share-button > span {
+  position: relative;
+  z-index: 1;
+}
+
+.x-logo {
+  display: grid;
+  width: 1.65rem;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.x-label {
+  white-space: nowrap;
 }
 
 .icon-button {
@@ -929,13 +997,13 @@ button {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   place-items: center;
-  min-height: clamp(96px, 15dvh, 146px);
+  min-height: clamp(82px, 13dvh, 132px);
   padding-inline: min(24vw, 300px);
 }
 
 .prompt-stack {
   display: grid;
-  min-height: clamp(86px, 13dvh, 128px);
+  min-height: clamp(74px, 11.5dvh, 118px);
   place-items: center;
   gap: 0.4rem;
   padding: 0.8rem 0.5rem 0;
@@ -1101,12 +1169,17 @@ button {
   white-space: pre;
 }
 
+.combo-callout-lane {
+  position: relative;
+  display: grid;
+  min-height: clamp(38px, 5.8dvh, 58px);
+  place-items: center;
+  pointer-events: none;
+}
+
 .combo-callout {
-  position: absolute;
-  top: -10px;
-  left: 50%;
+  position: relative;
   z-index: 4;
-  transform: translateX(-50%);
   border: 1px solid rgba(251, 191, 36, 0.32);
   border-radius: 999px;
   background: rgba(15, 23, 42, 0.82);
@@ -1139,6 +1212,73 @@ button {
   border-radius: 28px;
   padding: clamp(26px, 4vw, 44px);
   text-align: center;
+}
+
+.result-score-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) minmax(260px, auto) minmax(190px, 1fr);
+  align-items: center;
+  gap: clamp(12px, 2.2vw, 24px);
+  margin-top: 1rem;
+}
+
+.retry-key-hint {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 0.72rem;
+  border: 1px solid rgba(103, 232, 249, 0.18);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(34, 211, 238, 0.1), rgba(15, 23, 42, 0.58)),
+    rgba(2, 6, 23, 0.34);
+  color: #bae6fd;
+  padding: 0.72rem 0.92rem;
+  text-align: left;
+}
+
+.retry-key-hint kbd {
+  display: grid;
+  width: 2.25rem;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 1px solid rgba(251, 191, 36, 0.34);
+  border-radius: 10px;
+  background: rgba(2, 6, 23, 0.7);
+  box-shadow: inset 0 -3px 0 rgba(251, 191, 36, 0.18), 0 0 18px rgba(251, 191, 36, 0.12);
+  color: #fde68a;
+  font-size: 1.05rem;
+  font-weight: 950;
+}
+
+.retry-key-hint span {
+  color: #dbeafe;
+  font-size: 0.86rem;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+.result-score-main {
+  min-width: 0;
+}
+
+.result-score-main h2 {
+  color: #ffffff;
+  font-size: clamp(1.9rem, 4vw, 2.75rem);
+  font-weight: 950;
+  line-height: 1.08;
+}
+
+.result-score-main p {
+  margin-top: 0.75rem;
+  color: #cbd5e1;
+  line-height: 1.7;
+}
+
+.x-share-button-result {
+  justify-self: end;
+  min-width: 190px;
+  padding-inline: 1.18rem;
 }
 
 .rank-letter {
@@ -1893,6 +2033,16 @@ button {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .result-score-row {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+
+  .retry-key-hint,
+  .x-share-button-result {
+    justify-self: center;
+  }
+
   .post-result-grid {
     grid-template-columns: 1fr;
   }
@@ -1923,6 +2073,10 @@ button {
 
   .word-display {
     justify-content: center;
+  }
+
+  .result-score-main {
+    order: -1;
   }
 
   .input-readout {
@@ -2077,11 +2231,11 @@ button {
   }
 
   .prompt-row {
-    min-height: clamp(82px, 14dvh, 108px);
+    min-height: clamp(72px, 12dvh, 98px);
   }
 
   .prompt-stack {
-    min-height: clamp(76px, 12dvh, 98px);
+    min-height: clamp(66px, 10.5dvh, 88px);
     padding-top: 0.2rem;
   }
 
@@ -2093,6 +2247,10 @@ button {
     font-size: clamp(1.5rem, 5.8dvh, 3.25rem) !important;
     min-height: clamp(54px, 8dvh, 64px);
     padding: 0.55rem 1rem;
+  }
+
+  .combo-callout-lane {
+    min-height: clamp(32px, 5dvh, 44px);
   }
 
   .timer-track {
@@ -2152,11 +2310,11 @@ button {
   }
 
   .prompt-row {
-    min-height: clamp(70px, 13dvh, 88px);
+    min-height: clamp(62px, 11.5dvh, 78px);
   }
 
   .prompt-stack {
-    min-height: clamp(66px, 11dvh, 82px);
+    min-height: clamp(58px, 10dvh, 72px);
   }
 
   .kana-guide {
@@ -2175,6 +2333,15 @@ button {
     font-size: clamp(1.28rem, 5dvh, 2.48rem) !important;
     min-height: 48px;
     padding: 0.45rem 0.85rem;
+  }
+
+  .combo-callout-lane {
+    min-height: 30px;
+  }
+
+  .combo-callout {
+    font-size: 0.92rem;
+    padding: 0.4rem 0.8rem;
   }
 
   .input-readout {

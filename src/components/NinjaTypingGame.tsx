@@ -833,10 +833,24 @@ export function NinjaTypingGame() {
 
   const completeWord = useCallback(
     (completedPrompt: TypingPrompt) => {
+      const incomingPrompt = nextPrompt.text === completedPrompt.text ? pickWord(difficulty, completedPrompt) : nextPrompt;
+
       setIsResolving(true);
       setScreenShake(true);
       setAttackId((value) => value + 1);
       audio.play("clear");
+      setCurrentPrompt(incomingPrompt);
+      setNextPrompt(pickWord(difficulty, incomingPrompt));
+      setInput("");
+      setWrongIndex(null);
+
+      window.setTimeout(() => {
+        if (statusRef.current !== "playing") {
+          return;
+        }
+
+        setIsResolving(false);
+      }, 40);
 
       window.setTimeout(() => {
         if (statusRef.current !== "playing") {
@@ -857,15 +871,9 @@ export function NinjaTypingGame() {
           return;
         }
 
-        const incomingPrompt = nextPrompt.text === completedPrompt.text ? pickWord(difficulty, completedPrompt) : nextPrompt;
-        setCurrentPrompt(incomingPrompt);
-        setNextPrompt(pickWord(difficulty, incomingPrompt));
-        setInput("");
         setEnemyHit(false);
         setEnemyConfig((value) => createEnemyConfig(value.id + 1));
-        setWrongIndex(null);
-        setIsResolving(false);
-      }, 570);
+      }, 390);
     },
     [addEffect, audio, difficulty, enemyConfig.left, enemyConfig.top, nextPrompt]
   );
@@ -943,7 +951,7 @@ export function NinjaTypingGame() {
       }
 
       if (status === "finished") {
-        if (event.key === "Enter" || event.key === " ") {
+        if (event.key === "Enter" || event.key === " " || event.key.toLowerCase() === "r") {
           event.preventDefault();
           startGame();
         }
@@ -1177,7 +1185,8 @@ export function NinjaTypingGame() {
                     遊び方
                   </button>
                   <button className="x-share-button compact-button" type="button" onClick={() => openShareOnce(createGameShareUrl())}>
-                    Xでシェア
+                    <span className="x-logo" aria-hidden="true">X</span>
+                    <span className="x-label">Xでポスト</span>
                   </button>
                 </div>
               </div>
@@ -1258,19 +1267,21 @@ export function NinjaTypingGame() {
                 </div>
 
                 <div className="typing-zone">
-                  <AnimatePresence>
-                    {comboCallout ? (
-                      <motion.div
-                        key={`${comboCallout}-${metrics.combo}`}
-                        className="combo-callout"
-                        initial={{ opacity: 0, y: 18, scale: 0.82 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -12 }}
-                      >
-                        {comboCallout}
-                      </motion.div>
-                    ) : null}
-                  </AnimatePresence>
+                  <div className="combo-callout-lane" aria-live="polite">
+                    <AnimatePresence>
+                      {comboCallout ? (
+                        <motion.div
+                          key={`${comboCallout}-${metrics.combo}`}
+                          className="combo-callout"
+                          initial={{ opacity: 0, y: 10, scale: 0.82 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: -8 }}
+                        >
+                          {comboCallout}
+                        </motion.div>
+                      ) : null}
+                    </AnimatePresence>
+                  </div>
 
                   <div className="prompt-row">
                     <div className="prompt-stack current-prompt-card">
@@ -1314,10 +1325,34 @@ export function NinjaTypingGame() {
                   <span>{rank.subtitle}</span>
                   <em>{formatRankRange(rank)}</em>
                 </div>
-                <h2 className="mt-2 text-3xl font-black text-white sm:text-4xl">最終スコア {metrics.score.toLocaleString()}</h2>
-                <p className="mt-3 text-slate-300">
-                  {lastRunWasBest ? COPY.bestUpdated : `Best ${bestScore.toLocaleString()} ${COPY.bestChase}`}
-                </p>
+                <div className="result-score-row">
+                  <div className="retry-key-hint">
+                    <kbd>R</kbd>
+                    <span>もう一度プレイ</span>
+                  </div>
+                  <div className="result-score-main">
+                    <h2>最終スコア {metrics.score.toLocaleString()}</h2>
+                    <p>{lastRunWasBest ? COPY.bestUpdated : `Best ${bestScore.toLocaleString()} ${COPY.bestChase}`}</p>
+                  </div>
+                  <button
+                    className="x-share-button x-share-button-result"
+                    type="button"
+                    onClick={() =>
+                      openShareOnce(
+                        createScoreShareUrl({
+                          score: metrics.score,
+                          accuracy,
+                          maxCombo: metrics.maxCombo,
+                          difficulty: DIFFICULTIES[difficulty].label,
+                          rank: rank.title
+                        })
+                      )
+                    }
+                  >
+                    <span className="x-logo" aria-hidden="true">X</span>
+                    <span className="x-label">結果をXでポスト</span>
+                  </button>
+                </div>
               </div>
 
               <div className="result-grid">
@@ -1350,23 +1385,6 @@ export function NinjaTypingGame() {
                 </button>
                 <button className="ghost-button" type="button" onClick={returnToTitle}>
                   タイトル
-                </button>
-                <button
-                  className="x-share-button"
-                  type="button"
-                  onClick={() =>
-                    openShareOnce(
-                      createScoreShareUrl({
-                        score: metrics.score,
-                        accuracy,
-                        maxCombo: metrics.maxCombo,
-                        difficulty: DIFFICULTIES[difficulty].label,
-                        rank: rank.title
-                      })
-                    )
-                  }
-                >
-                  スコアをXでシェア
                 </button>
               </div>
             </motion.section>
