@@ -135,7 +135,7 @@ function unique(values: string[]) {
   return Array.from(new Set(values));
 }
 
-function toHiragana(value: string) {
+export function toHiragana(value: string) {
   return value.replace(/[\u30a1-\u30f6]/g, (char) => {
     if (char === "\u30fc") {
       return char;

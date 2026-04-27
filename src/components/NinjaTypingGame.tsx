@@ -22,7 +22,7 @@ import {
   type Metrics,
   type RankDefinition
 } from "@/lib/game";
-import { buildRomajiOptions, getReadingProgress, getRomajiGuide, type ReadingProgress } from "@/lib/romaji";
+import { buildRomajiOptions, getReadingProgress, getRomajiGuide, toHiragana, type ReadingProgress } from "@/lib/romaji";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import type { LeaderboardRecord } from "@/types/leaderboard";
 import { createGameShareUrl, createScoreShareUrl, openShareUrl } from "@/utils/share";
@@ -70,6 +70,77 @@ const COPY = {
 const DIFFICULTY_ORDER: Difficulty[] = ["easy", "normal", "hard"];
 const RANK_ID_SET = new Set(RANKS.map((rank) => rank.id));
 const enemyNames = ["ONI", "AKA NINJA", "KAGE ONI", "ROGUE", "SHADOW"];
+const smallKana = new Set("ゃゅょぁぃぅぇぉゎっャュョァィゥェォヮッ".split(""));
+
+const TEXT_READING_OVERRIDES: Array<{ text: string; readings: string[] }> = [
+  { text: "手裏剣", readings: ["しゅ", "り", "けん"] },
+  { text: "黒装束", readings: ["くろ", "しょう", "ぞく"] },
+  { text: "静寂", readings: ["せい", "じゃく"] },
+  { text: "疾風", readings: ["しっ", "ぷう"] },
+  { text: "隠密", readings: ["おん", "みつ"] },
+  { text: "巻物", readings: ["まき", "もの"] },
+  { text: "水面", readings: ["みな", "も"] },
+  { text: "灯火", readings: ["ともし", "び"] },
+  { text: "抜刀", readings: ["ばっ", "とう"] },
+  { text: "閃光", readings: ["せん", "こう"] },
+  { text: "結界", readings: ["けっ", "かい"] },
+  { text: "護符", readings: ["ご", "ふ"] },
+  { text: "秘伝", readings: ["ひ", "でん"] },
+  { text: "合図", readings: ["あい", "ず"] },
+  { text: "夜明け", readings: ["よ", "あ", "け"] },
+  { text: "影分身", readings: ["かげ", "ぶん", "しん"] },
+  { text: "忍術", readings: ["にん", "じゅつ"] },
+  { text: "一撃", readings: ["いち", "げき"] },
+  { text: "一閃", readings: ["いっ", "せん"] },
+  { text: "間合い", readings: ["ま", "あ", "い"] },
+  { text: "残像", readings: ["ざん", "ぞう"] },
+  { text: "暗号", readings: ["あん", "ごう"] },
+  { text: "宝玉", readings: ["ほう", "ぎょく"] },
+  { text: "門番", readings: ["もん", "ばん"] },
+  { text: "夜桜", readings: ["よ", "ざくら"] },
+  { text: "石畳", readings: ["いし", "だたみ"] },
+  { text: "道場", readings: ["どう", "じょう"] },
+  { text: "影法師", readings: ["かげ", "ぼう", "し"] },
+  { text: "忍道", readings: ["にん", "どう"] },
+  { text: "密偵", readings: ["みっ", "てい"] },
+  { text: "抜忍", readings: ["ぬけ", "にん"] },
+  { text: "闇討ち", readings: ["やみ", "う", "ち"] },
+  { text: "斥候", readings: ["せっ", "こう"] },
+  { text: "跳梁", readings: ["ちょう", "りょう"] },
+  { text: "暗躍", readings: ["あん", "やく"] },
+  { text: "奇策", readings: ["き", "さく"] },
+  { text: "機転", readings: ["き", "てん"] },
+  { text: "潜伏", readings: ["せん", "ぷく"] },
+  { text: "隠形", readings: ["おん", "ぎょう"] },
+  { text: "疾走感", readings: ["しっ", "そう", "かん"] },
+  { text: "鋭眼", readings: ["えい", "がん"] },
+  { text: "刃先", readings: ["は", "さき"] },
+  { text: "闘気", readings: ["とう", "き"] },
+  { text: "気絶", readings: ["き", "ぜつ"] },
+  { text: "夜陰", readings: ["や", "いん"] },
+  { text: "隙間", readings: ["すき", "ま"] },
+  { text: "壁影", readings: ["かべ", "かげ"] },
+  { text: "天井裏", readings: ["てん", "じょう", "うら"] },
+  { text: "床下", readings: ["ゆか", "した"] },
+  { text: "抜刀術", readings: ["ばっ", "とう", "じゅつ"] },
+  { text: "鎖鎌", readings: ["くさり", "がま"] },
+  { text: "苦無", readings: ["く", "ない"] },
+  { text: "火薬", readings: ["か", "やく"] },
+  { text: "爆煙", readings: ["ばく", "えん"] },
+  { text: "煙幕", readings: ["えん", "まく"] },
+  { text: "閃き", readings: ["ひらめ", "き"] },
+  { text: "連撃", readings: ["れん", "げき"] },
+  { text: "必中", readings: ["ひっ", "ちゅう"] },
+  { text: "俊敏", readings: ["しゅん", "びん"] },
+  { text: "期限", readings: ["き", "げん"] },
+  { text: "昨日", readings: ["き", "のう"] },
+  { text: "制圧", readings: ["せい", "あつ"] },
+  { text: "集中", readings: ["しゅう", "ちゅう"] },
+  { text: "正確", readings: ["せい", "かく"] },
+  { text: "把握", readings: ["は", "あく"] },
+  { text: "敵", readings: ["てき"] },
+  { text: "忍者", readings: ["にん", "じゃ"] }
+].sort((first, second) => second.text.length - first.text.length);
 
 function createEnemyConfig(id: number): EnemyConfig {
   return {
@@ -517,27 +588,191 @@ function renderChar(char: string, index: number, input: string, wrongIndex: numb
   );
 }
 
-function getTextProgress(text: string, reading: string, readingProgress: ReadingProgress): ReadingProgress {
-  const textLength = Array.from(text).length;
-  const readingLength = Math.max(1, Array.from(reading).length);
+function getTextProgress(text: string, reading: string, readingProgress: ReadingProgress, readingParts?: string[]): ReadingProgress {
+  const spans = buildTextReadingSpans(text, reading, readingParts);
+  const textLength = spans.length;
 
-  if (textLength === 0 || readingProgress.completed >= readingLength) {
+  if (textLength === 0) {
     return {
-      completed: textLength,
+      completed: 0,
+      activeStart: 0,
+      activeEnd: 0
+    };
+  }
+
+  const activeIndex = spans.findIndex(
+    (span) => readingProgress.activeStart >= span.readingStart && readingProgress.activeStart < span.readingEnd
+  );
+
+  if (activeIndex === -1) {
+    return {
+      completed: spans.filter((span) => span.readingEnd <= readingProgress.completed).length,
       activeStart: textLength,
       activeEnd: textLength
     };
   }
 
-  const completed = Math.min(textLength, Math.floor((readingProgress.completed / readingLength) * textLength));
-  const activeStart = Math.min(textLength - 1, completed);
-  const activeEnd = Math.min(textLength, activeStart + 1);
-
   return {
-    completed,
-    activeStart,
-    activeEnd
+    completed: spans.filter((span) => span.readingEnd <= readingProgress.completed).length,
+    activeStart: activeIndex,
+    activeEnd: activeIndex + 1
   };
+}
+
+function buildTextReadingSpans(text: string, reading: string, readingParts?: string[]) {
+  const textChars = Array.from(text);
+  const normalizedReading = toHiragana(reading);
+  const explicitSpans = buildExplicitReadingSpans(textChars, readingParts);
+
+  if (explicitSpans) {
+    return explicitSpans;
+  }
+
+  const spans: Array<{ readingStart: number; readingEnd: number }> = [];
+  let textIndex = 0;
+  let readingIndex = 0;
+
+  while (textIndex < textChars.length) {
+    const override = findReadingOverride(textChars, textIndex, normalizedReading, readingIndex);
+
+    if (override) {
+      for (const part of override.readings) {
+        const readingStart = readingIndex;
+        readingIndex += part.length;
+        spans.push({ readingStart, readingEnd: readingIndex });
+      }
+
+      textIndex += override.length;
+      continue;
+    }
+
+    const charReading = getLiteralReading(textChars[textIndex]);
+
+    if (charReading && normalizedReading.startsWith(charReading, readingIndex)) {
+      spans.push({ readingStart: readingIndex, readingEnd: readingIndex + charReading.length });
+      readingIndex += charReading.length;
+      textIndex += 1;
+      continue;
+    }
+
+    const runStart = textIndex;
+    const runChars: string[] = [];
+
+    while (textIndex < textChars.length && !getLiteralReading(textChars[textIndex])) {
+      runChars.push(textChars[textIndex]);
+      textIndex += 1;
+    }
+
+    const nextLiteral = textIndex < textChars.length ? getLiteralReading(textChars[textIndex]) : "";
+    const nextLiteralIndex = nextLiteral ? normalizedReading.indexOf(nextLiteral, readingIndex) : -1;
+    const runReadingEnd = nextLiteralIndex >= readingIndex ? nextLiteralIndex : normalizedReading.length;
+    const parts = distributeReading(normalizedReading.slice(readingIndex, runReadingEnd), runChars.length);
+
+    for (let index = 0; index < runChars.length; index += 1) {
+      const part = parts[index] ?? "";
+      const readingStart = readingIndex;
+      readingIndex += part.length;
+      spans[runStart + index] = { readingStart, readingEnd: Math.max(readingStart + 1, readingIndex) };
+    }
+  }
+
+  return spans.map((span) => span ?? { readingStart: normalizedReading.length, readingEnd: normalizedReading.length });
+}
+
+function buildExplicitReadingSpans(textChars: string[], readingParts?: string[]) {
+  if (!readingParts || readingParts.length !== textChars.length) {
+    return null;
+  }
+
+  let readingIndex = 0;
+
+  return readingParts.map((part) => {
+    const normalizedPart = toHiragana(part);
+    const readingStart = readingIndex;
+    readingIndex += normalizedPart.length;
+
+    return {
+      readingStart,
+      readingEnd: readingIndex
+    };
+  });
+}
+
+function findReadingOverride(textChars: string[], textIndex: number, reading: string, readingIndex: number) {
+  for (const override of TEXT_READING_OVERRIDES) {
+    const overrideChars = Array.from(override.text);
+
+    if (overrideChars.some((char, index) => textChars[textIndex + index] !== char)) {
+      continue;
+    }
+
+    const normalizedParts = override.readings.map((part) => toHiragana(part));
+
+    if (reading.startsWith(normalizedParts.join(""), readingIndex)) {
+      return {
+        length: overrideChars.length,
+        readings: normalizedParts
+      };
+    }
+  }
+
+  return null;
+}
+
+function getLiteralReading(char: string) {
+  if (/[\u3041-\u3096]/.test(char)) {
+    return char;
+  }
+
+  if (/[\u30a1-\u30f6]/.test(char) || char === "ー") {
+    return toHiragana(char);
+  }
+
+  if (char === " ") {
+    return " ";
+  }
+
+  return "";
+}
+
+function splitReadingUnits(value: string) {
+  const units: string[] = [];
+
+  for (const char of Array.from(value)) {
+    if ((smallKana.has(char) || char === "ー") && units.length > 0) {
+      units[units.length - 1] += char;
+      continue;
+    }
+
+    units.push(char);
+  }
+
+  return units;
+}
+
+function distributeReading(reading: string, textLength: number) {
+  if (textLength <= 0) {
+    return [];
+  }
+
+  const units = splitReadingUnits(reading);
+
+  if (textLength === 1) {
+    return [reading || " "];
+  }
+
+  const parts: string[] = [];
+  let unitIndex = 0;
+
+  for (let index = 0; index < textLength; index += 1) {
+    const remainingChars = textLength - index;
+    const remainingUnits = units.length - unitIndex;
+    const take = index === textLength - 1 ? remainingUnits : Math.max(1, Math.floor(remainingUnits / remainingChars));
+    parts.push(units.slice(unitIndex, unitIndex + take).join(""));
+    unitIndex += take;
+  }
+
+  return parts;
 }
 
 function renderPromptProgress(value: string, progress: ReadingProgress, variant: "kana" | "text", isWrong: boolean) {
@@ -599,8 +834,8 @@ export function NinjaTypingGame() {
   const romajiGuide = useMemo(() => getRomajiGuide(romajiCandidates, input), [input, romajiCandidates]);
   const readingProgress = useMemo(() => getReadingProgress(currentPrompt.reading, romajiGuide, input), [currentPrompt.reading, input, romajiGuide]);
   const textProgress = useMemo(
-    () => getTextProgress(currentPrompt.text, currentPrompt.reading, readingProgress),
-    [currentPrompt.reading, currentPrompt.text, readingProgress]
+    () => getTextProgress(currentPrompt.text, currentPrompt.reading, readingProgress, currentPrompt.readingParts),
+    [currentPrompt.reading, currentPrompt.readingParts, currentPrompt.text, readingProgress]
   );
   const comboCallout = getComboCallout(metrics.combo);
   const auraClass = metrics.combo >= 18 ? "combo-legend" : metrics.combo >= 10 ? "combo-hot" : "";
