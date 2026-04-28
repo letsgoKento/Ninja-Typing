@@ -1687,7 +1687,7 @@ export function NinjaTypingGame() {
                             initial={{
                               left: "21%",
                               top: `${startTop}%`,
-                              rotate: spread * -80,
+                              rotate: lane * -80,
                               opacity: 0,
                               scale: 0.66 + attackIntensity * 0.12
                             }}
