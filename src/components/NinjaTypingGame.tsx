@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { AuthPanel } from "@/components/AuthPanel";
@@ -44,6 +44,12 @@ type EnemyConfig = {
   top: number;
   scale: number;
   variant: number;
+};
+
+type PromptFontSizes = {
+  kana: string;
+  japanese: string;
+  romaji: string;
 };
 
 const JA_TITLE = "\u5fcd\u8005\u30bf\u30a4\u30d4\u30f3\u30b0";
@@ -195,6 +201,53 @@ function getJapaneseFontSize(length: number) {
   }
 
   return "clamp(2.6rem, 5.4vw, 5.8rem)";
+}
+
+function getKanaFontSize(length: number) {
+  if (length >= 30) {
+    return "clamp(0.72rem, 1.05vw, 1.02rem)";
+  }
+
+  if (length >= 24) {
+    return "clamp(0.82rem, 1.22vw, 1.12rem)";
+  }
+
+  if (length >= 18) {
+    return "clamp(0.94rem, 1.42vw, 1.26rem)";
+  }
+
+  if (length >= 12) {
+    return "clamp(1rem, 1.58vw, 1.38rem)";
+  }
+
+  return "clamp(1.08rem, 1.75vw, 1.5rem)";
+}
+
+function getPromptFontSizes(prompt: TypingPrompt): PromptFontSizes {
+  const romajiOptions = buildRomajiOptions(prompt.reading);
+  const longestGuideLength = Math.max(prompt.reading.length, ...romajiOptions.map((option) => option.length));
+
+  return {
+    kana: getKanaFontSize(Array.from(prompt.reading).length),
+    japanese: getJapaneseFontSize(Array.from(prompt.text).length),
+    romaji: getWordFontSize(longestGuideLength)
+  };
+}
+
+function getComboEffectStep(combo: number) {
+  return Math.floor(Math.max(0, combo) / 2);
+}
+
+function getAttackIntensity(combo: number) {
+  return Math.min(getComboEffectStep(combo) / 12, 1);
+}
+
+function getShurikenCount(combo: number) {
+  return Math.max(1, Math.max(0, combo));
+}
+
+function getHitBurstCount(combo: number) {
+  return 1 + Math.min(getComboEffectStep(combo), 12);
 }
 
 function useNinjaAudio(enabled: boolean) {
@@ -481,15 +534,22 @@ function HowToPlayPanel() {
 }
 
 function NinjaFigure({ combo }: { combo: number }) {
-  const aura = Math.min(combo / 30, 1);
+  const comboStep = getComboEffectStep(combo);
+  const aura = getAttackIntensity(combo);
+  const tierClass = comboStep >= 9 ? "ninja-tier-legend" : comboStep >= 5 ? "ninja-tier-hot" : comboStep >= 1 ? "ninja-tier-warm" : "";
 
   return (
-    <motion.div className="ninja-wrap" animate={{ y: [0, -5, 0] }} transition={{ duration: 2.6, repeat: Infinity }}>
+    <motion.div
+      className={`ninja-wrap ${tierClass}`}
+      animate={{ y: [0, -5 - aura * 5, 0], rotate: [0, -aura * 1.6, aura * 1.6, 0] }}
+      transition={{ duration: Math.max(1.45, 2.6 - aura * 0.9), repeat: Infinity, ease: "easeInOut" }}
+    >
       <motion.div
         className="ninja-aura"
         animate={{
           opacity: 0.28 + aura * 0.5,
-          scale: 1 + aura * 0.28
+          scale: 1 + aura * 0.28,
+          rotate: 360 * aura
         }}
       />
       <svg className="ninja-svg" viewBox="0 0 220 220" role="img" aria-label="Cyber ninja">
@@ -575,6 +635,7 @@ function renderChar(char: string, index: number, input: string, wrongIndex: numb
   return (
     <span
       key={`${char}-${index}`}
+      data-romaji-index={index}
       className={[
         "word-char",
         typed ? "word-char-correct" : "",
@@ -803,6 +864,7 @@ export function NinjaTypingGame() {
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
   const [currentPrompt, setCurrentPrompt] = useState(() => pickWord("normal"));
   const [nextPrompt, setNextPrompt] = useState(() => pickWord("normal"));
+  const [promptFontSizes, setPromptFontSizes] = useState(() => getPromptFontSizes(currentPrompt));
   const [input, setInput] = useState("");
   const [metrics, setMetrics] = useState<Metrics>(initialMetrics);
   const [timeLeft, setTimeLeft] = useState(GAME_TIME_SECONDS);
@@ -813,6 +875,8 @@ export function NinjaTypingGame() {
   const [enemyHit, setEnemyHit] = useState(false);
   const [enemyConfig, setEnemyConfig] = useState(() => createEnemyConfig(0));
   const [attackId, setAttackId] = useState(0);
+  const [attackCombo, setAttackCombo] = useState(0);
+  const [romajiOffset, setRomajiOffset] = useState(0);
   const [isResolving, setIsResolving] = useState(false);
   const [screenShake, setScreenShake] = useState(false);
   const [lastRunWasBest, setLastRunWasBest] = useState(false);
@@ -826,6 +890,8 @@ export function NinjaTypingGame() {
   const statusRef = useRef(status);
   const effectIdRef = useRef(0);
   const shareLockRef = useRef(0);
+  const romajiViewportRef = useRef<HTMLDivElement | null>(null);
+  const romajiTrackRef = useRef<HTMLDivElement | null>(null);
   const audio = useNinjaAudio(soundEnabled);
 
   const accuracy = useMemo(() => calculateAccuracy(metrics.correctKeys, metrics.totalKeys), [metrics.correctKeys, metrics.totalKeys]);
@@ -837,8 +903,12 @@ export function NinjaTypingGame() {
     () => getTextProgress(currentPrompt.text, currentPrompt.reading, readingProgress, currentPrompt.readingParts),
     [currentPrompt.reading, currentPrompt.readingParts, currentPrompt.text, readingProgress]
   );
+  const activeRomajiIndex = Math.min(input.length, Math.max(romajiGuide.length - 1, 0));
   const comboCallout = getComboCallout(metrics.combo);
-  const auraClass = metrics.combo >= 18 ? "combo-legend" : metrics.combo >= 10 ? "combo-hot" : "";
+  const comboEffectStep = getComboEffectStep(metrics.combo);
+  const auraClass = comboEffectStep >= 9 ? "combo-legend" : comboEffectStep >= 5 ? "combo-hot" : comboEffectStep >= 1 ? "combo-warm" : "";
+  const activeShurikenCount = getShurikenCount(attackCombo);
+  const attackIntensity = getAttackIntensity(attackCombo);
 
   useEffect(() => {
     metricsRef.current = metrics;
@@ -847,6 +917,42 @@ export function NinjaTypingGame() {
   useEffect(() => {
     statusRef.current = status;
   }, [status]);
+
+  useEffect(() => {
+    setPromptFontSizes(getPromptFontSizes(currentPrompt));
+  }, [currentPrompt]);
+
+  useLayoutEffect(() => {
+    const viewport = romajiViewportRef.current;
+    const track = romajiTrackRef.current;
+
+    if (!viewport || !track) {
+      return;
+    }
+
+    const updateOffset = () => {
+      const viewportWidth = viewport.clientWidth;
+      const trackWidth = track.scrollWidth;
+      const activeChar = track.querySelector<HTMLElement>(`[data-romaji-index="${activeRomajiIndex}"]`);
+
+      if (!activeChar || trackWidth <= viewportWidth) {
+        setRomajiOffset(0);
+        return;
+      }
+
+      const activeCenter = activeChar.offsetLeft + activeChar.offsetWidth / 2;
+      const targetCenter = viewportWidth * 0.48;
+      const minOffset = viewportWidth - trackWidth;
+      const nextOffset = Math.round(Math.min(0, Math.max(minOffset, targetCenter - activeCenter)));
+
+      setRomajiOffset(nextOffset);
+    };
+
+    updateOffset();
+    window.addEventListener("resize", updateOffset);
+
+    return () => window.removeEventListener("resize", updateOffset);
+  }, [activeRomajiIndex, promptFontSizes.romaji, romajiGuide]);
 
   const refreshAccount = useCallback(async () => {
     const supabase = getSupabaseClient();
@@ -1036,6 +1142,7 @@ export function NinjaTypingGame() {
     setStatus("playing");
     setCurrentPrompt(firstPrompt);
     setNextPrompt(queuedPrompt);
+    setPromptFontSizes(getPromptFontSizes(firstPrompt));
     setInput("");
     setMetrics(initialMetrics);
     setTimeLeft(GAME_TIME_SECONDS);
@@ -1044,6 +1151,8 @@ export function NinjaTypingGame() {
     setEnemyHit(false);
     setEnemyConfig((value) => createEnemyConfig(value.id + 1));
     setAttackId(0);
+    setAttackCombo(0);
+    setRomajiOffset(0);
     setIsResolving(false);
     setScreenShake(false);
     setLastRunWasBest(false);
@@ -1060,6 +1169,8 @@ export function NinjaTypingGame() {
     setStatus("idle");
     setTimeLeft(GAME_TIME_SECONDS);
     setInput("");
+    setAttackCombo(0);
+    setRomajiOffset(0);
     setIsResolving(false);
     setWrongIndex(null);
     setEnemyHit(false);
@@ -1072,6 +1183,7 @@ export function NinjaTypingGame() {
       setLeaderboardDifficulty(selectedDifficulty);
       setStatus("leaderboard");
       setInput("");
+      setRomajiOffset(0);
       setIsResolving(false);
       setWrongIndex(null);
       setEnemyHit(false);
@@ -1084,6 +1196,7 @@ export function NinjaTypingGame() {
     statusRef.current = "auth";
     setStatus("auth");
     setInput("");
+    setRomajiOffset(0);
     setIsResolving(false);
     setWrongIndex(null);
     setEnemyHit(false);
@@ -1094,6 +1207,7 @@ export function NinjaTypingGame() {
     statusRef.current = "help";
     setStatus("help");
     setInput("");
+    setRomajiOffset(0);
     setIsResolving(false);
     setWrongIndex(null);
     setEnemyHit(false);
@@ -1126,16 +1240,19 @@ export function NinjaTypingGame() {
   }, []);
 
   const completeWord = useCallback(
-    (completedPrompt: TypingPrompt) => {
+    (completedPrompt: TypingPrompt, comboValue: number) => {
       const incomingPrompt = nextPrompt.text === completedPrompt.text ? pickWord(difficulty, completedPrompt) : nextPrompt;
 
       setIsResolving(true);
       setScreenShake(true);
       setAttackId((value) => value + 1);
+      setAttackCombo(comboValue);
       audio.play("clear");
       setCurrentPrompt(incomingPrompt);
       setNextPrompt(pickWord(difficulty, incomingPrompt));
+      setPromptFontSizes(getPromptFontSizes(incomingPrompt));
       setInput("");
+      setRomajiOffset(0);
       setWrongIndex(null);
 
       window.setTimeout(() => {
@@ -1152,7 +1269,28 @@ export function NinjaTypingGame() {
         }
 
         setEnemyHit(true);
-        addEffect("hit", { left: enemyConfig.left, top: enemyConfig.top });
+        const burstCount = getHitBurstCount(comboValue);
+
+        for (let index = 0; index < burstCount; index += 1) {
+          const spread = index - (burstCount - 1) / 2;
+
+          addEffect("hit", {
+            left: enemyConfig.left + spread * 2.4 + (Math.random() - 0.5) * 1.2,
+            top: enemyConfig.top + (Math.random() - 0.5) * 7
+          });
+        }
+
+        const finishSlashCount = Math.min(getComboEffectStep(comboValue), 8);
+
+        for (let index = 0; index < finishSlashCount; index += 1) {
+          const angle = (Math.PI * 2 * index) / Math.max(1, finishSlashCount);
+
+          addEffect("slash", {
+            left: enemyConfig.left + Math.cos(angle) * 8,
+            top: enemyConfig.top + Math.sin(angle) * 8
+          });
+        }
+
         audio.play("hit");
       }, 210);
 
@@ -1277,9 +1415,23 @@ export function NinjaTypingGame() {
         setInput(nextInput);
         setWrongIndex(null);
         addEffect("slash");
+
+        const slashLevel = Math.min(getComboEffectStep(metricsRef.current.combo), 6);
+
+        for (let index = 0; index < slashLevel; index += 1) {
+          if ((input.length + index) % 2 === 0) {
+            addEffect("slash", {
+              left: 44 + Math.random() * 30,
+              top: 24 + Math.random() * 36
+            });
+          }
+        }
+
         audio.play("type");
 
         if (romajiCandidates.includes(nextInput)) {
+          const completedCombo = metricsRef.current.combo + 1;
+
           setMetrics((previous) => {
             const nextCombo = previous.combo + 1;
 
@@ -1293,7 +1445,7 @@ export function NinjaTypingGame() {
               clearedWords: previous.clearedWords + 1
             };
           });
-          completeWord(currentPrompt);
+          completeWord(currentPrompt, completedCombo);
           return;
         }
 
@@ -1518,22 +1670,45 @@ export function NinjaTypingGame() {
 
                   <AnimatePresence>
                     {attackId > 0 ? (
-                      <motion.div
-                        key={attackId}
-                        className="shuriken"
-                        initial={{ left: "21%", top: "52%", rotate: 0, opacity: 0, scale: 0.72 }}
-                        animate={{
-                          left: ["21%", `${Math.max(44, enemyConfig.left - 8)}%`, `${enemyConfig.left}%`],
-                          top: ["52%", `${Math.max(14, enemyConfig.top - 13)}%`, `${enemyConfig.top}%`],
-                          rotate: 1080,
-                          opacity: [0, 1, 1, 0],
-                          scale: [0.72, 1, 0.82]
-                        }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.36, ease: "easeOut" }}
-                      >
-                        <span />
-                      </motion.div>
+                      Array.from({ length: activeShurikenCount }).map((_, index) => {
+                        const normalizedSpread = activeShurikenCount <= 1 ? 0 : (index / (activeShurikenCount - 1) - 0.5) * 2;
+                        const wave = Math.sin(index * 1.7) * 0.28;
+                        const lane = normalizedSpread + wave;
+                        const startTop = 52 + lane * 13;
+                        const middleTop = Math.max(10, Math.min(78, enemyConfig.top - 13 + lane * 18));
+                        const endTop = Math.max(12, Math.min(82, enemyConfig.top + lane * 9));
+                        const middleLeft = Math.max(42, enemyConfig.left - 8 - Math.abs(lane) * 2.4);
+                        const endLeft = enemyConfig.left + lane * 5.6;
+
+                        return (
+                          <motion.div
+                            key={`${attackId}-${index}`}
+                            className="shuriken"
+                            initial={{
+                              left: "21%",
+                              top: `${startTop}%`,
+                              rotate: spread * -80,
+                              opacity: 0,
+                              scale: 0.66 + attackIntensity * 0.12
+                            }}
+                            animate={{
+                              left: ["21%", `${middleLeft}%`, `${endLeft}%`],
+                              top: [`${startTop}%`, `${middleTop}%`, `${endTop}%`],
+                              rotate: 1080 + attackIntensity * 900 + index * 160,
+                              opacity: [0, 1, 1, 0],
+                              scale: [0.66 + attackIntensity * 0.12, 1.02 + attackIntensity * 0.26, 0.78 + attackIntensity * 0.08]
+                            }}
+                            exit={{ opacity: 0 }}
+                            transition={{
+                              duration: Math.max(0.24, 0.37 - attackIntensity * 0.09),
+                              delay: index * Math.max(0.006, 0.026 - attackIntensity * 0.012),
+                              ease: "easeOut"
+                            }}
+                          >
+                            <span />
+                          </motion.div>
+                        );
+                      })
                     ) : null}
                   </AnimatePresence>
 
@@ -1579,10 +1754,10 @@ export function NinjaTypingGame() {
 
                   <div className="prompt-row">
                     <div className="prompt-stack current-prompt-card">
-                      <div className="kana-guide">
+                      <div className="kana-guide" style={{ fontSize: promptFontSizes.kana }}>
                         {renderPromptProgress(currentPrompt.reading, readingProgress, "kana", wrongIndex !== null)}
                       </div>
-                      <div className="japanese-prompt" style={{ fontSize: getJapaneseFontSize(currentPrompt.text.length) }}>
+                      <div className="japanese-prompt" style={{ fontSize: promptFontSizes.japanese }}>
                         {renderPromptProgress(currentPrompt.text, textProgress, "text", wrongIndex !== null)}
                       </div>
                     </div>
@@ -1593,8 +1768,10 @@ export function NinjaTypingGame() {
                     </div>
                   </div>
 
-                  <div className="word-display" aria-label={`Type ${romajiGuide}`} style={{ fontSize: getWordFontSize(romajiGuide.length) }}>
-                    {romajiGuide.split("").map((char, index) => renderChar(char, index, input, wrongIndex))}
+                  <div ref={romajiViewportRef} className="word-display" aria-label={`Type ${romajiGuide}`} style={{ fontSize: promptFontSizes.romaji }}>
+                    <div ref={romajiTrackRef} className="word-track" style={{ transform: `translateX(${romajiOffset}px)` }}>
+                      {romajiGuide.split("").map((char, index) => renderChar(char, index, input, wrongIndex))}
+                    </div>
                   </div>
                   <div className="input-readout">
                     <span>INPUT</span>
