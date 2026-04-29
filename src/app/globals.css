@@ -221,6 +221,33 @@ button {
   min-width: 0;
 }
 
+.title-kicker-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+}
+
+.settings-pill-button {
+  border: 1px solid rgba(103, 232, 249, 0.34);
+  border-radius: 999px;
+  background:
+    linear-gradient(135deg, rgba(34, 211, 238, 0.16), rgba(15, 23, 42, 0.72)),
+    rgba(2, 6, 23, 0.45);
+  box-shadow: 0 0 24px rgba(34, 211, 238, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  color: #a5f3fc;
+  font-size: 0.9rem;
+  font-weight: 950;
+  padding: 0.62rem 1rem;
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.settings-pill-button:hover {
+  border-color: rgba(251, 191, 36, 0.48);
+  box-shadow: 0 0 30px rgba(34, 211, 238, 0.2), 0 0 18px rgba(251, 191, 36, 0.12);
+  transform: translateY(-2px);
+}
+
 .hero-title {
   display: flex;
   align-items: baseline;
@@ -1509,7 +1536,8 @@ button {
 }
 
 .auth-layout,
-.help-layout {
+.help-layout,
+.settings-layout {
   display: grid;
   flex: 1;
   align-content: center;
@@ -1523,6 +1551,7 @@ button {
 .leaderboard-panel,
 .account-status-panel,
 .help-panel,
+.settings-panel,
 .auth-callback-card {
   border: 1px solid rgba(148, 163, 184, 0.2);
   border-radius: 24px;
@@ -1531,6 +1560,129 @@ button {
     linear-gradient(180deg, rgba(248, 113, 113, 0.1), transparent);
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.07);
   backdrop-filter: blur(18px);
+}
+
+.settings-panel {
+  display: grid;
+  gap: clamp(18px, 3vw, 28px);
+  padding: clamp(22px, 3.2vw, 36px);
+}
+
+.settings-header {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.settings-header span {
+  color: #67e8f9;
+  font-size: 0.72rem;
+  font-weight: 950;
+  letter-spacing: 0.28em;
+}
+
+.settings-header h2 {
+  color: #f8fafc;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-weight: 950;
+  line-height: 1;
+}
+
+.settings-header p {
+  max-width: 760px;
+  color: #cbd5e1;
+  line-height: 1.8;
+}
+
+.settings-list {
+  display: grid;
+  gap: 0.72rem;
+}
+
+.settings-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  min-height: 82px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(34, 211, 238, 0.08), rgba(15, 23, 42, 0.48)),
+    rgba(2, 6, 23, 0.28);
+  padding: 1rem 1.05rem;
+}
+
+.settings-row strong {
+  color: #f8fafc;
+  font-size: 1.02rem;
+  font-weight: 950;
+}
+
+.settings-row p {
+  margin-top: 0.25rem;
+  color: #94a3b8;
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.65;
+}
+
+.settings-switch {
+  position: relative;
+  display: grid;
+  grid-template-columns: 34px auto;
+  align-items: center;
+  gap: 0.58rem;
+  min-width: 92px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.78);
+  color: #94a3b8;
+  font-size: 0.76rem;
+  font-weight: 950;
+  padding: 0.42rem 0.64rem;
+  transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease, color 160ms ease;
+}
+
+.settings-switch span {
+  display: block;
+  width: 32px;
+  height: 18px;
+  border-radius: 999px;
+  background: rgba(30, 41, 59, 0.9);
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.3);
+}
+
+.settings-switch span::after {
+  display: block;
+  width: 14px;
+  height: 14px;
+  margin: 2px;
+  border-radius: 999px;
+  background: #64748b;
+  content: "";
+  transition: transform 160ms ease, background 160ms ease, box-shadow 160ms ease;
+}
+
+.settings-switch em {
+  font-style: normal;
+}
+
+.settings-switch-on {
+  border-color: rgba(34, 211, 238, 0.52);
+  background: rgba(14, 116, 144, 0.24);
+  box-shadow: 0 0 24px rgba(34, 211, 238, 0.14);
+  color: #a5f3fc;
+}
+
+.settings-switch-on span {
+  background: rgba(8, 145, 178, 0.42);
+  box-shadow: inset 0 0 0 1px rgba(103, 232, 249, 0.4);
+}
+
+.settings-switch-on span::after {
+  background: #67e8f9;
+  box-shadow: 0 0 14px rgba(34, 211, 238, 0.72);
+  transform: translateX(14px);
 }
 
 .score-submit-panel {
@@ -2212,6 +2364,11 @@ button {
 
   .help-grid {
     grid-template-columns: 1fr;
+  }
+
+  .settings-row {
+    grid-template-columns: 1fr;
+    justify-items: start;
   }
 }
 

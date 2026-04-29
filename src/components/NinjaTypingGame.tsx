@@ -52,8 +52,69 @@ type PromptFontSizes = {
   romaji: string;
 };
 
+type PlayerSettings = {
+  comboEffects: boolean;
+  kanaProgress: boolean;
+  textProgress: boolean;
+  romajiAutoScroll: boolean;
+  nextPromptPreview: boolean;
+  screenShake: boolean;
+  comboCallouts: boolean;
+};
+
 const JA_TITLE = "\u5fcd\u8005\u30bf\u30a4\u30d4\u30f3\u30b0";
 const SPACE_MARK = "\u00a0";
+const PLAYER_SETTINGS_KEY = "ninja-typing-player-settings";
+const SOUND_SETTINGS_KEY = "ninja-typing-sound-enabled";
+const disabledProgress: ReadingProgress = { completed: 0, activeStart: -1, activeEnd: -1 };
+
+const defaultPlayerSettings: PlayerSettings = {
+  comboEffects: true,
+  kanaProgress: true,
+  textProgress: true,
+  romajiAutoScroll: true,
+  nextPromptPreview: true,
+  screenShake: true,
+  comboCallouts: true
+};
+
+const playerSettingRows: Array<{ key: keyof PlayerSettings; title: string; description: string }> = [
+  {
+    key: "comboEffects",
+    title: "コンボ演出変化",
+    description: "コンボ数に応じて手裏剣数、爆発、オーラ、斬撃を強化します。"
+  },
+  {
+    key: "kanaProgress",
+    title: "ふりがなの追従表示",
+    description: "いま読んでいる位置をふりがな側でも光らせます。"
+  },
+  {
+    key: "textProgress",
+    title: "お題の追従表示",
+    description: "漢字やかなのお題側でも現在位置を追跡します。"
+  },
+  {
+    key: "romajiAutoScroll",
+    title: "ローマ字の自動追従",
+    description: "長文で入力位置が画面外に出ないよう横方向に追いかけます。"
+  },
+  {
+    key: "nextPromptPreview",
+    title: "次のお題プレビュー",
+    description: "現在のお題の右上に次のお題を小さく表示します。"
+  },
+  {
+    key: "screenShake",
+    title: "画面シェイク",
+    description: "ミスや撃破時の揺れ演出を有効にします。"
+  },
+  {
+    key: "comboCallouts",
+    title: "コンボ称号",
+    description: "NICE、COOL、SHINOBIなどの表示を出します。"
+  }
+];
 
 const COPY = {
   countdown: "60\u79d2\u3067\u4f55\u4f53\u5012\u305b\u308b\u304b",
@@ -248,6 +309,24 @@ function getShurikenCount(combo: number) {
 
 function getHitBurstCount(combo: number) {
   return 1 + Math.min(getComboEffectStep(combo), 12);
+}
+
+function normalizePlayerSettings(value: unknown): PlayerSettings {
+  if (!value || typeof value !== "object") {
+    return defaultPlayerSettings;
+  }
+
+  const parsed = value as Partial<Record<keyof PlayerSettings, unknown>>;
+
+  return {
+    comboEffects: typeof parsed.comboEffects === "boolean" ? parsed.comboEffects : defaultPlayerSettings.comboEffects,
+    kanaProgress: typeof parsed.kanaProgress === "boolean" ? parsed.kanaProgress : defaultPlayerSettings.kanaProgress,
+    textProgress: typeof parsed.textProgress === "boolean" ? parsed.textProgress : defaultPlayerSettings.textProgress,
+    romajiAutoScroll: typeof parsed.romajiAutoScroll === "boolean" ? parsed.romajiAutoScroll : defaultPlayerSettings.romajiAutoScroll,
+    nextPromptPreview: typeof parsed.nextPromptPreview === "boolean" ? parsed.nextPromptPreview : defaultPlayerSettings.nextPromptPreview,
+    screenShake: typeof parsed.screenShake === "boolean" ? parsed.screenShake : defaultPlayerSettings.screenShake,
+    comboCallouts: typeof parsed.comboCallouts === "boolean" ? parsed.comboCallouts : defaultPlayerSettings.comboCallouts
+  };
 }
 
 function useNinjaAudio(enabled: boolean) {
@@ -528,6 +607,72 @@ function HowToPlayPanel() {
         <span>Base: 85 + 読みの長さ x 16</span>
         <span>Combo: 1連ごとに +10%</span>
         <span>Difficulty: Easy x1 / Normal x1.25 / Hard x1.55</span>
+      </div>
+    </div>
+  );
+}
+
+function SettingsSwitch({
+  checked,
+  onChange,
+  label
+}: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      className={`settings-switch ${checked ? "settings-switch-on" : ""}`}
+      onClick={() => onChange(!checked)}
+    >
+      <span />
+      <em>{checked ? "ON" : "OFF"}</em>
+    </button>
+  );
+}
+
+function SettingsPanel({
+  settings,
+  soundEnabled,
+  onSettingChange,
+  onSoundChange
+}: {
+  settings: PlayerSettings;
+  soundEnabled: boolean;
+  onSettingChange: (key: keyof PlayerSettings, value: boolean) => void;
+  onSoundChange: (enabled: boolean) => void;
+}) {
+  return (
+    <div className="settings-panel">
+      <div className="settings-header">
+        <span>PLAY STYLE</span>
+        <h2>設定</h2>
+        <p>演出の強さや入力位置の見せ方を、自分の集中しやすい形に調整できます。</p>
+      </div>
+
+      <div className="settings-list">
+        <div className="settings-row">
+          <div>
+            <strong>効果音</strong>
+            <p>タイプ音、撃破音、ボタン音などを鳴らします。</p>
+          </div>
+          <SettingsSwitch checked={soundEnabled} label="効果音" onChange={onSoundChange} />
+        </div>
+
+        {playerSettingRows.map((item) => (
+          <div className="settings-row" key={item.key}>
+            <div>
+              <strong>{item.title}</strong>
+              <p>{item.description}</p>
+            </div>
+            <SettingsSwitch checked={settings[item.key]} label={item.title} onChange={(checked) => onSettingChange(item.key, checked)} />
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -870,6 +1015,7 @@ export function NinjaTypingGame() {
   const [timeLeft, setTimeLeft] = useState(GAME_TIME_SECONDS);
   const [bestScore, setBestScore] = useState(0);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [playerSettings, setPlayerSettings] = useState<PlayerSettings>(defaultPlayerSettings);
   const [effects, setEffects] = useState<VisualEffect[]>([]);
   const [wrongIndex, setWrongIndex] = useState<number | null>(null);
   const [enemyHit, setEnemyHit] = useState(false);
@@ -904,11 +1050,13 @@ export function NinjaTypingGame() {
     [currentPrompt.reading, currentPrompt.readingParts, currentPrompt.text, readingProgress]
   );
   const activeRomajiIndex = Math.min(input.length, Math.max(romajiGuide.length - 1, 0));
-  const comboCallout = getComboCallout(metrics.combo);
-  const comboEffectStep = getComboEffectStep(metrics.combo);
+  const comboCallout = playerSettings.comboCallouts ? getComboCallout(metrics.combo) : "";
+  const comboEffectStep = playerSettings.comboEffects ? getComboEffectStep(metrics.combo) : 0;
   const auraClass = comboEffectStep >= 9 ? "combo-legend" : comboEffectStep >= 5 ? "combo-hot" : comboEffectStep >= 1 ? "combo-warm" : "";
-  const activeShurikenCount = getShurikenCount(attackCombo);
-  const attackIntensity = getAttackIntensity(attackCombo);
+  const activeShurikenCount = playerSettings.comboEffects ? getShurikenCount(attackCombo) : 1;
+  const attackIntensity = playerSettings.comboEffects ? getAttackIntensity(attackCombo) : 0;
+  const visibleReadingProgress = playerSettings.kanaProgress ? readingProgress : disabledProgress;
+  const visibleTextProgress = playerSettings.textProgress ? textProgress : disabledProgress;
 
   useEffect(() => {
     metricsRef.current = metrics;
@@ -919,12 +1067,38 @@ export function NinjaTypingGame() {
   }, [status]);
 
   useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const savedSettings = window.localStorage.getItem(PLAYER_SETTINGS_KEY);
+    const savedSound = window.localStorage.getItem(SOUND_SETTINGS_KEY);
+
+    if (savedSettings) {
+      try {
+        setPlayerSettings(normalizePlayerSettings(JSON.parse(savedSettings)));
+      } catch {
+        setPlayerSettings(defaultPlayerSettings);
+      }
+    }
+
+    if (savedSound !== null) {
+      setSoundEnabled(savedSound === "true");
+    }
+  }, []);
+
+  useEffect(() => {
     setPromptFontSizes(getPromptFontSizes(currentPrompt));
   }, [currentPrompt]);
 
   useLayoutEffect(() => {
     const viewport = romajiViewportRef.current;
     const track = romajiTrackRef.current;
+
+    if (!playerSettings.romajiAutoScroll) {
+      setRomajiOffset(0);
+      return;
+    }
 
     if (!viewport || !track) {
       return;
@@ -952,7 +1126,7 @@ export function NinjaTypingGame() {
     window.addEventListener("resize", updateOffset);
 
     return () => window.removeEventListener("resize", updateOffset);
-  }, [activeRomajiIndex, promptFontSizes.romaji, romajiGuide]);
+  }, [activeRomajiIndex, playerSettings.romajiAutoScroll, promptFontSizes.romaji, romajiGuide]);
 
   const refreshAccount = useCallback(async () => {
     const supabase = getSupabaseClient();
@@ -1110,6 +1284,38 @@ export function NinjaTypingGame() {
     openShareUrl(shareUrl);
   }, []);
 
+  const updatePlayerSetting = useCallback((key: keyof PlayerSettings, value: boolean) => {
+    setPlayerSettings((previous) => {
+      const next = { ...previous, [key]: value };
+
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(PLAYER_SETTINGS_KEY, JSON.stringify(next));
+      }
+
+      return next;
+    });
+  }, []);
+
+  const updateSoundEnabled = useCallback((enabled: boolean) => {
+    setSoundEnabled(enabled);
+
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(SOUND_SETTINGS_KEY, String(enabled));
+    }
+  }, []);
+
+  const toggleSoundEnabled = useCallback(() => {
+    setSoundEnabled((previous) => {
+      const next = !previous;
+
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(SOUND_SETTINGS_KEY, String(next));
+      }
+
+      return next;
+    });
+  }, []);
+
   const selectDifficultyByOffset = useCallback((offset: number) => {
     setDifficulty((current) => {
       const index = DIFFICULTY_ORDER.indexOf(current);
@@ -1213,6 +1419,17 @@ export function NinjaTypingGame() {
     setEnemyHit(false);
   }, [audio]);
 
+  const openSettings = useCallback(() => {
+    audio.stopAmbient();
+    statusRef.current = "settings";
+    setStatus("settings");
+    setInput("");
+    setRomajiOffset(0);
+    setIsResolving(false);
+    setWrongIndex(null);
+    setEnemyHit(false);
+  }, [audio]);
+
   const handleHeaderAuthChanged = useCallback(
     (nextSession: Session | null, nextUsername?: string) => {
       setSession(nextSession);
@@ -1269,7 +1486,7 @@ export function NinjaTypingGame() {
         }
 
         setEnemyHit(true);
-        const burstCount = getHitBurstCount(comboValue);
+        const burstCount = playerSettings.comboEffects ? getHitBurstCount(comboValue) : 1;
 
         for (let index = 0; index < burstCount; index += 1) {
           const spread = index - (burstCount - 1) / 2;
@@ -1280,7 +1497,7 @@ export function NinjaTypingGame() {
           });
         }
 
-        const finishSlashCount = Math.min(getComboEffectStep(comboValue), 8);
+        const finishSlashCount = playerSettings.comboEffects ? Math.min(getComboEffectStep(comboValue), 8) : 0;
 
         for (let index = 0; index < finishSlashCount; index += 1) {
           const angle = (Math.PI * 2 * index) / Math.max(1, finishSlashCount);
@@ -1307,13 +1524,13 @@ export function NinjaTypingGame() {
         setEnemyConfig((value) => createEnemyConfig(value.id + 1));
       }, 390);
     },
-    [addEffect, audio, difficulty, enemyConfig.left, enemyConfig.top, nextPrompt]
+    [addEffect, audio, difficulty, enemyConfig.left, enemyConfig.top, nextPrompt, playerSettings.comboEffects]
   );
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        if (status === "playing" || status === "finished" || status === "leaderboard" || status === "auth" || status === "help") {
+        if (status === "playing" || status === "finished" || status === "leaderboard" || status === "auth" || status === "help" || status === "settings") {
           event.preventDefault();
           returnToTitle();
         }
@@ -1379,6 +1596,11 @@ export function NinjaTypingGame() {
           openHelp();
         }
 
+        if (event.key.toLowerCase() === "s") {
+          event.preventDefault();
+          openSettings();
+        }
+
         return;
       }
 
@@ -1416,7 +1638,7 @@ export function NinjaTypingGame() {
         setWrongIndex(null);
         addEffect("slash");
 
-        const slashLevel = Math.min(getComboEffectStep(metricsRef.current.combo), 6);
+        const slashLevel = playerSettings.comboEffects ? Math.min(getComboEffectStep(metricsRef.current.combo), 6) : 0;
 
         for (let index = 0; index < slashLevel; index += 1) {
           if ((input.length + index) % 2 === 0) {
@@ -1483,6 +1705,8 @@ export function NinjaTypingGame() {
       openLeaderboard,
       openAuth,
       openHelp,
+      openSettings,
+      playerSettings.comboEffects,
       selectDifficultyByOffset,
       startGame,
       status
@@ -1528,13 +1752,18 @@ export function NinjaTypingGame() {
           <strong>広告スペース</strong>
         </aside>
 
-        <div className={`app-content ${screenShake ? "screen-shake" : ""}`}>
+        <div className={`app-content ${screenShake && playerSettings.screenShake ? "screen-shake" : ""}`}>
         <header className="flex items-center justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.38em] text-cyan-200/80">Cyber Shinobi Drill</p>
             <h1 className="mt-2 text-2xl font-black tracking-normal text-white sm:text-3xl">Ninja Typing / {JA_TITLE}</h1>
           </div>
           <div className="header-actions">
+            {status !== "playing" ? (
+              <button className="icon-button wide-icon-button settings-header-button" type="button" onClick={openSettings}>
+                設定
+              </button>
+            ) : null}
             {status !== "playing" ? (
               <button className="icon-button wide-icon-button" type="button" onClick={() => openLeaderboard()}>
                 ランキング
@@ -1553,7 +1782,7 @@ export function NinjaTypingGame() {
             <button
               className="icon-button"
               type="button"
-              onClick={() => setSoundEnabled((value) => !value)}
+              onClick={toggleSoundEnabled}
               aria-label={soundEnabled ? "効果音 ON" : "効果音 OFF"}
               title={soundEnabled ? "効果音 ON" : "効果音 OFF"}
             >
@@ -1573,9 +1802,14 @@ export function NinjaTypingGame() {
               transition={{ duration: 0.28 }}
             >
               <div className="title-copy">
-                <p className="inline-flex rounded-full border border-cyan-300/25 bg-cyan-300/10 px-4 py-2 text-sm font-bold text-cyan-100 shadow-neon-cyan">
-                  {COPY.countdown}
-                </p>
+                <div className="title-kicker-row">
+                  <p className="inline-flex rounded-full border border-cyan-300/25 bg-cyan-300/10 px-4 py-2 text-sm font-bold text-cyan-100 shadow-neon-cyan">
+                    {COPY.countdown}
+                  </p>
+                  <button className="settings-pill-button" type="button" onClick={openSettings}>
+                    設定
+                  </button>
+                </div>
                 <h2 className="hero-title">
                   <span className="hero-word-primary">{COPY.heroLine1}</span>
                   <span className="hero-divider">/</span>
@@ -1666,7 +1900,7 @@ export function NinjaTypingGame() {
                 </div>
 
                 <div className="stage">
-                  <NinjaFigure combo={metrics.combo} />
+                  <NinjaFigure combo={playerSettings.comboEffects ? metrics.combo : 0} />
 
                   <AnimatePresence>
                     {attackId > 0 ? (
@@ -1755,17 +1989,19 @@ export function NinjaTypingGame() {
                   <div className="prompt-row">
                     <div className="prompt-stack current-prompt-card">
                       <div className="kana-guide" style={{ fontSize: promptFontSizes.kana }}>
-                        {renderPromptProgress(currentPrompt.reading, readingProgress, "kana", wrongIndex !== null)}
+                        {renderPromptProgress(currentPrompt.reading, visibleReadingProgress, "kana", playerSettings.kanaProgress && wrongIndex !== null)}
                       </div>
                       <div className="japanese-prompt" style={{ fontSize: promptFontSizes.japanese }}>
-                        {renderPromptProgress(currentPrompt.text, textProgress, "text", wrongIndex !== null)}
+                        {renderPromptProgress(currentPrompt.text, visibleTextProgress, "text", playerSettings.textProgress && wrongIndex !== null)}
                       </div>
                     </div>
-                    <div className="next-prompt-preview">
-                      <span>次のお題</span>
-                      <strong>{nextPrompt.text}</strong>
-                      <em>{nextPrompt.reading}</em>
-                    </div>
+                    {playerSettings.nextPromptPreview ? (
+                      <div className="next-prompt-preview">
+                        <span>次のお題</span>
+                        <strong>{nextPrompt.text}</strong>
+                        <em>{nextPrompt.reading}</em>
+                      </div>
+                    ) : null}
                   </div>
 
                   <div ref={romajiViewportRef} className="word-display" aria-label={`Type ${romajiGuide}`} style={{ fontSize: promptFontSizes.romaji }}>
@@ -1920,6 +2156,32 @@ export function NinjaTypingGame() {
               transition={{ duration: 0.28 }}
             >
               <HowToPlayPanel />
+              <div className="result-actions">
+                <button className="start-button" type="button" onClick={startGame}>
+                  Start
+                </button>
+                <button className="ghost-button" type="button" onClick={returnToTitle}>
+                  タイトル
+                </button>
+              </div>
+            </motion.section>
+          ) : null}
+
+          {status === "settings" ? (
+            <motion.section
+              key="settings"
+              className="settings-layout"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -16 }}
+              transition={{ duration: 0.28 }}
+            >
+              <SettingsPanel
+                settings={playerSettings}
+                soundEnabled={soundEnabled}
+                onSettingChange={updatePlayerSetting}
+                onSoundChange={updateSoundEnabled}
+              />
               <div className="result-actions">
                 <button className="start-button" type="button" onClick={startGame}>
                   Start
