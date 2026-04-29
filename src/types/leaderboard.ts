@@ -9,6 +9,7 @@ export type LeaderboardRecord = {
   accuracy: number;
   max_combo: number;
   miss_count: number;
+  cpm: number;
   difficulty: Difficulty;
   created_at: string;
 };
@@ -44,6 +45,8 @@ export function isValidLeaderboardScore(entry: LeaderboardInsert) {
     entry.max_combo >= 0 &&
     Number.isInteger(entry.miss_count) &&
     entry.miss_count >= 0 &&
+    Number.isInteger(entry.cpm) &&
+    entry.cpm >= 0 &&
     isLeaderboardDifficulty(entry.difficulty)
   );
 }

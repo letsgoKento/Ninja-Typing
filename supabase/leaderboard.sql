@@ -16,6 +16,7 @@ create table if not exists public.leaderboard (
   accuracy numeric(5, 2) not null check (accuracy >= 0 and accuracy <= 100),
   max_combo integer not null check (max_combo >= 0),
   miss_count integer not null check (miss_count >= 0),
+  cpm integer not null default 0 check (cpm >= 0),
   difficulty text not null check (difficulty in ('easy', 'normal', 'hard')),
   created_at timestamptz not null default now()
 );
@@ -25,6 +26,9 @@ alter table public.leaderboard
 
 alter table public.leaderboard
   add column if not exists shoutout text not null default '';
+
+alter table public.leaderboard
+  add column if not exists cpm integer not null default 0;
 
 do $$
 begin
@@ -36,6 +40,19 @@ begin
   ) then
     alter table public.leaderboard
       add constraint leaderboard_shoutout_length_check check (length(shoutout) <= 80);
+  end if;
+end $$;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'leaderboard_cpm_non_negative_check'
+      and conrelid = 'public.leaderboard'::regclass
+  ) then
+    alter table public.leaderboard
+      add constraint leaderboard_cpm_non_negative_check check (cpm >= 0);
   end if;
 end $$;
 
@@ -83,6 +100,7 @@ create policy "Users can insert own leaderboard score"
     and accuracy <= 100
     and max_combo >= 0
     and miss_count >= 0
+    and cpm >= 0
     and difficulty in ('easy', 'normal', 'hard')
   );
 
@@ -99,6 +117,7 @@ create policy "Users can update own leaderboard score"
     and accuracy <= 100
     and max_combo >= 0
     and miss_count >= 0
+    and cpm >= 0
     and difficulty in ('easy', 'normal', 'hard')
   );
 

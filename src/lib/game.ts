@@ -58,6 +58,14 @@ export function calculateAccuracy(correctKeys: number, totalKeys: number) {
   return Math.round((correctKeys / totalKeys) * 100);
 }
 
+export function calculateCpm(totalKeys: number, durationSeconds: number) {
+  if (totalKeys <= 0 || durationSeconds <= 0) {
+    return 0;
+  }
+
+  return Math.round(totalKeys / (durationSeconds / 60));
+}
+
 export function getComboCallout(combo: number) {
   if (combo >= 30) {
     return "LEGEND";

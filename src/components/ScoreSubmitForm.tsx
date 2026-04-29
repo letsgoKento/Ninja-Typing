@@ -22,6 +22,7 @@ type ScoreSubmitFormProps = {
   accuracy: number;
   maxCombo: number;
   missCount: number;
+  cpm: number;
   difficulty: Difficulty;
   onSubmitted: (record: LeaderboardRecord) => void;
 };
@@ -53,6 +54,7 @@ function normalizeScorePayload(payload: LeaderboardInsert): LeaderboardInsert {
     accuracy: Math.min(100, Math.max(0, Number(payload.accuracy.toFixed(2)))),
     max_combo: Math.max(0, Math.floor(payload.max_combo)),
     miss_count: Math.max(0, Math.floor(payload.miss_count)),
+    cpm: Math.max(0, Math.floor(payload.cpm)),
     difficulty: payload.difficulty
   };
 }
@@ -74,6 +76,7 @@ export function ScoreSubmitForm({
   accuracy,
   maxCombo,
   missCount,
+  cpm,
   difficulty,
   onSubmitted
 }: ScoreSubmitFormProps) {
@@ -166,7 +169,7 @@ export function ScoreSubmitForm({
       return;
     }
 
-    if (score < 0 || accuracy < 0 || accuracy > 100 || maxCombo < 0 || missCount < 0) {
+    if (score < 0 || accuracy < 0 || accuracy > 100 || maxCombo < 0 || missCount < 0 || cpm < 0) {
       setSubmitState("error");
       setMessage(FORM_TEXT.invalidScore);
       return;
@@ -188,6 +191,7 @@ export function ScoreSubmitForm({
       accuracy,
       max_combo: maxCombo,
       miss_count: missCount,
+      cpm,
       difficulty
     });
 
@@ -202,7 +206,7 @@ export function ScoreSubmitForm({
 
     const { data: existing, error: existingError } = await supabase
       .from("leaderboard")
-      .select("id, user_id, player_name, shoutout, score, accuracy, max_combo, miss_count, difficulty, created_at")
+      .select("id, user_id, player_name, shoutout, score, accuracy, max_combo, miss_count, cpm, difficulty, created_at")
       .eq("user_id", session.user.id)
       .eq("difficulty", difficulty)
       .maybeSingle();
@@ -224,6 +228,7 @@ export function ScoreSubmitForm({
             accuracy: payload.accuracy,
             max_combo: payload.max_combo,
             miss_count: payload.miss_count,
+            cpm: payload.cpm,
             created_at: new Date().toISOString()
           }
         : {
@@ -236,7 +241,7 @@ export function ScoreSubmitForm({
         .update(updatePayload)
         .eq("id", current.id)
         .eq("user_id", session.user.id)
-        .select("id, user_id, player_name, shoutout, score, accuracy, max_combo, miss_count, difficulty, created_at")
+        .select("id, user_id, player_name, shoutout, score, accuracy, max_combo, miss_count, cpm, difficulty, created_at")
         .single();
 
       if (error || !data) {
@@ -257,7 +262,7 @@ export function ScoreSubmitForm({
         ...payload,
         created_at: new Date().toISOString()
       })
-      .select("id, user_id, player_name, shoutout, score, accuracy, max_combo, miss_count, difficulty, created_at")
+      .select("id, user_id, player_name, shoutout, score, accuracy, max_combo, miss_count, cpm, difficulty, created_at")
       .single();
 
     if (error || !data) {
@@ -322,6 +327,7 @@ export function ScoreSubmitForm({
 
       <div className="submit-meta">
         <span>{Math.max(0, remainingChars)} / 80</span>
+        <span>CPM {cpm}</span>
         <span>{score.toLocaleString()} pts</span>
       </div>
 

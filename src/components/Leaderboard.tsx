@@ -52,7 +52,7 @@ export function Leaderboard({ initialDifficulty = "normal", highlightId, refresh
 
       const { data, error } = await supabase
         .from("leaderboard")
-        .select("id, user_id, player_name, shoutout, score, accuracy, max_combo, miss_count, difficulty, created_at")
+        .select("id, user_id, player_name, shoutout, score, accuracy, max_combo, miss_count, cpm, difficulty, created_at")
         .eq("difficulty", activeDifficulty)
         .not("user_id", "is", null)
         .order("score", { ascending: false })
@@ -135,7 +135,7 @@ export function Leaderboard({ initialDifficulty = "normal", highlightId, refresh
                 <div className="leaderboard-score">
                   <strong>{record.score.toLocaleString()}</strong>
                   <span>
-                    {Number(record.accuracy).toFixed(0)}% / x{record.max_combo} / miss {record.miss_count}
+                    {Number(record.accuracy).toFixed(0)}% / CPM {record.cpm} / x{record.max_combo} / miss {record.miss_count}
                   </span>
                 </div>
               </div>

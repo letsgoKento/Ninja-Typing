@@ -12,6 +12,7 @@ export type DifficultyConfig = {
   subtitle: string;
   description: string;
   multiplier: number;
+  durationSeconds: number;
   words: TypingPrompt[];
 };
 
@@ -23,6 +24,7 @@ export const DIFFICULTIES: Record<Difficulty, DifficultyConfig> = {
     subtitle: "短い日本語",
     description: "ひらがな・漢字の短いお題。初回プレイ向け。",
     multiplier: 1,
+    durationSeconds: 60,
     words: [
       { text: "忍者", reading: "にんじゃ", readingParts: ["にん", "じゃ"] },
       { text: "刀", reading: "かたな", readingParts: ["かたな"] },
@@ -260,6 +262,7 @@ export const DIFFICULTIES: Record<Difficulty, DifficultyConfig> = {
     subtitle: "単語・短い句",
     description: "漢字やカタカナを含む標準モード。",
     multiplier: 1.25,
+    durationSeconds: 90,
     words: [
       { text: "忍者修行", reading: "にんじゃしゅぎょう", readingParts: ["にん", "じゃ", "しゅ", "ぎょう"] },
       { text: "夜の城", reading: "よるのしろ", readingParts: ["よる", "の", "しろ"] },
@@ -824,6 +827,7 @@ export const DIFFICULTIES: Record<Difficulty, DifficultyConfig> = {
     subtitle: "長めの日本語",
     description: "長文や拗音・促音を含む上級モード。",
     multiplier: 1.55,
+    durationSeconds: 120,
     words: [
       { text: "闇夜に走る赤い忍者", reading: "やみよにはしるあかいにんじゃ", readingParts: ["やみ", "よ", "に", "はし", "る", "あか", "い", "にん", "じゃ"] },
       { text: "満月の城へ向かう", reading: "まんげつのしろへむかう", readingParts: ["まん", "げつ", "の", "しろ", "へ", "む", "か", "う"] },

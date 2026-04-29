@@ -7,10 +7,11 @@ import type { Session } from "@supabase/supabase-js";
 import { AuthPanel } from "@/components/AuthPanel";
 import { Leaderboard } from "@/components/Leaderboard";
 import { ScoreSubmitForm } from "@/components/ScoreSubmitForm";
-import { DIFFICULTIES, type Difficulty, GAME_TIME_SECONDS, type TypingPrompt } from "@/data/wordBank";
+import { DIFFICULTIES, type Difficulty, type TypingPrompt } from "@/data/wordBank";
 import { getFallbackUsername, loadProfileUsername } from "@/lib/authHelpers";
 import {
   calculateAccuracy,
+  calculateCpm,
   calculateWordScore,
   getBestScoreKey,
   getComboCallout,
@@ -52,7 +53,10 @@ type PromptFontSizes = {
   romaji: string;
 };
 
+type PromptLayout = "stageTop" | "promptTop";
+
 type PlayerSettings = {
+  promptLayout: PromptLayout;
   comboEffects: boolean;
   kanaProgress: boolean;
   textProgress: boolean;
@@ -62,6 +66,8 @@ type PlayerSettings = {
   comboCallouts: boolean;
 };
 
+type BooleanPlayerSettingKey = Exclude<keyof PlayerSettings, "promptLayout">;
+
 const JA_TITLE = "\u5fcd\u8005\u30bf\u30a4\u30d4\u30f3\u30b0";
 const SPACE_MARK = "\u00a0";
 const PLAYER_SETTINGS_KEY = "ninja-typing-player-settings";
@@ -69,6 +75,7 @@ const SOUND_SETTINGS_KEY = "ninja-typing-sound-enabled";
 const disabledProgress: ReadingProgress = { completed: 0, activeStart: -1, activeEnd: -1 };
 
 const defaultPlayerSettings: PlayerSettings = {
+  promptLayout: "stageTop",
   comboEffects: true,
   kanaProgress: true,
   textProgress: true,
@@ -78,7 +85,7 @@ const defaultPlayerSettings: PlayerSettings = {
   comboCallouts: true
 };
 
-const playerSettingRows: Array<{ key: keyof PlayerSettings; title: string; description: string }> = [
+const playerSettingRows: Array<{ key: BooleanPlayerSettingKey; title: string; description: string }> = [
   {
     key: "comboEffects",
     title: "コンボ演出変化",
@@ -117,7 +124,7 @@ const playerSettingRows: Array<{ key: keyof PlayerSettings; title: string; descr
 ];
 
 const COPY = {
-  countdown: "60\u79d2\u3067\u4f55\u4f53\u5012\u305b\u308b\u304b",
+  countdown: "60 / 90 / 120\u79d2\u3067\u4f55\u4f53\u5012\u305b\u308b\u304b",
   heroLine1: "忍者!!",
   heroLine2: "タイピング",
   intro:
@@ -317,8 +324,13 @@ function normalizePlayerSettings(value: unknown): PlayerSettings {
   }
 
   const parsed = value as Partial<Record<keyof PlayerSettings, unknown>>;
+  const promptLayout =
+    parsed.promptLayout === "promptTop" || parsed.promptLayout === "stageTop"
+      ? parsed.promptLayout
+      : defaultPlayerSettings.promptLayout;
 
   return {
+    promptLayout,
     comboEffects: typeof parsed.comboEffects === "boolean" ? parsed.comboEffects : defaultPlayerSettings.comboEffects,
     kanaProgress: typeof parsed.kanaProgress === "boolean" ? parsed.kanaProgress : defaultPlayerSettings.kanaProgress,
     textProgress: typeof parsed.textProgress === "boolean" ? parsed.textProgress : defaultPlayerSettings.textProgress,
@@ -722,11 +734,13 @@ function SettingsPanel({
   settings,
   soundEnabled,
   onSettingChange,
+  onPromptLayoutChange,
   onSoundChange
 }: {
   settings: PlayerSettings;
   soundEnabled: boolean;
-  onSettingChange: (key: keyof PlayerSettings, value: boolean) => void;
+  onSettingChange: (key: BooleanPlayerSettingKey, value: boolean) => void;
+  onPromptLayoutChange: (value: PromptLayout) => void;
   onSoundChange: (enabled: boolean) => void;
 }) {
   return (
@@ -735,6 +749,38 @@ function SettingsPanel({
         <span>PLAY STYLE</span>
         <h2>設定</h2>
         <p>演出の強さや入力位置の見せ方を、自分の集中しやすい形に調整できます。</p>
+      </div>
+
+      <div className="settings-featured">
+        <div>
+          <span>DISPLAY ORDER</span>
+          <strong>お題と演出の上下</strong>
+          <p>
+            「演出が上」は忍者と敵の動きを先に見せる標準配置。「お題が上」は入力する文字を先に読みたい人向けに、お題とローマ字を演出より上へ移動します。
+          </p>
+        </div>
+        <div className="layout-choice-group" role="radiogroup" aria-label="お題と演出の表示順">
+          <button
+            type="button"
+            role="radio"
+            aria-checked={settings.promptLayout === "stageTop"}
+            className={settings.promptLayout === "stageTop" ? "layout-choice-active" : ""}
+            onClick={() => onPromptLayoutChange("stageTop")}
+          >
+            <span>演出が上</span>
+            <em>標準</em>
+          </button>
+          <button
+            type="button"
+            role="radio"
+            aria-checked={settings.promptLayout === "promptTop"}
+            className={settings.promptLayout === "promptTop" ? "layout-choice-active" : ""}
+            onClick={() => onPromptLayoutChange("promptTop")}
+          >
+            <span>お題が上</span>
+            <em>読み優先</em>
+          </button>
+        </div>
       </div>
 
       <div className="settings-list">
@@ -752,7 +798,7 @@ function SettingsPanel({
               <strong>{item.title}</strong>
               <p>{item.description}</p>
             </div>
-            <SettingsSwitch checked={settings[item.key]} label={item.title} onChange={(checked) => onSettingChange(item.key, checked)} />
+            <SettingsSwitch checked={Boolean(settings[item.key])} label={item.title} onChange={(checked) => onSettingChange(item.key, checked)} />
           </div>
         ))}
       </div>
@@ -1094,7 +1140,7 @@ export function NinjaTypingGame() {
   const [promptFontSizes, setPromptFontSizes] = useState(() => getPromptFontSizes(currentPrompt));
   const [input, setInput] = useState("");
   const [metrics, setMetrics] = useState<Metrics>(initialMetrics);
-  const [timeLeft, setTimeLeft] = useState(GAME_TIME_SECONDS);
+  const [timeLeft, setTimeLeft] = useState(DIFFICULTIES.normal.durationSeconds);
   const [bestScore, setBestScore] = useState(0);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [playerSettings, setPlayerSettings] = useState<PlayerSettings>(defaultPlayerSettings);
@@ -1122,7 +1168,9 @@ export function NinjaTypingGame() {
   const romajiTrackRef = useRef<HTMLDivElement | null>(null);
   const audio = useNinjaAudio(soundEnabled);
 
+  const gameDurationSeconds = DIFFICULTIES[difficulty].durationSeconds;
   const accuracy = useMemo(() => calculateAccuracy(metrics.correctKeys, metrics.totalKeys), [metrics.correctKeys, metrics.totalKeys]);
+  const cpm = useMemo(() => calculateCpm(metrics.totalKeys, gameDurationSeconds), [gameDurationSeconds, metrics.totalKeys]);
   const rank = useMemo(() => getRank(metrics.score), [metrics.score]);
   const romajiCandidates = useMemo(() => buildRomajiOptions(currentPrompt.reading), [currentPrompt.reading]);
   const romajiGuide = useMemo(() => getRomajiGuide(romajiCandidates, input), [input, romajiCandidates]);
@@ -1366,17 +1414,29 @@ export function NinjaTypingGame() {
     openShareUrl(shareUrl);
   }, []);
 
-  const updatePlayerSetting = useCallback((key: keyof PlayerSettings, value: boolean) => {
-    setPlayerSettings((previous) => {
-      const next = { ...previous, [key]: value };
+  const savePlayerSettings = useCallback((next: PlayerSettings) => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(PLAYER_SETTINGS_KEY, JSON.stringify(next));
+    }
+  }, []);
 
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem(PLAYER_SETTINGS_KEY, JSON.stringify(next));
-      }
+  const updatePlayerSetting = useCallback((key: BooleanPlayerSettingKey, value: boolean) => {
+    setPlayerSettings((previous) => {
+      const next = { ...previous, [key]: value } as PlayerSettings;
+      savePlayerSettings(next);
 
       return next;
     });
-  }, []);
+  }, [savePlayerSettings]);
+
+  const updatePromptLayout = useCallback((value: PromptLayout) => {
+    setPlayerSettings((previous) => {
+      const next = { ...previous, promptLayout: value };
+      savePlayerSettings(next);
+
+      return next;
+    });
+  }, [savePlayerSettings]);
 
   const updateSoundEnabled = useCallback((enabled: boolean) => {
     setSoundEnabled(enabled);
@@ -1425,6 +1485,7 @@ export function NinjaTypingGame() {
   const startGame = useCallback(() => {
     const firstPrompt = pickWord(difficulty, currentPrompt);
     const queuedPrompt = pickWord(difficulty, firstPrompt);
+    const durationSeconds = DIFFICULTIES[difficulty].durationSeconds;
 
     statusRef.current = "playing";
     setStatus("playing");
@@ -1433,7 +1494,7 @@ export function NinjaTypingGame() {
     setPromptFontSizes(getPromptFontSizes(firstPrompt));
     setInput("");
     setMetrics(initialMetrics);
-    setTimeLeft(GAME_TIME_SECONDS);
+    setTimeLeft(durationSeconds);
     setEffects([]);
     setWrongIndex(null);
     setEnemyHit(false);
@@ -1446,7 +1507,7 @@ export function NinjaTypingGame() {
     setLastRunWasBest(false);
     setSubmittedLeaderboardId(null);
     setLeaderboardDifficulty(difficulty);
-    endAtRef.current = Date.now() + GAME_TIME_SECONDS * 1000;
+    endAtRef.current = Date.now() + durationSeconds * 1000;
     audio.play("start");
     audio.startAmbient();
   }, [audio, currentPrompt, difficulty]);
@@ -1455,14 +1516,14 @@ export function NinjaTypingGame() {
     audio.stopAmbient();
     statusRef.current = "idle";
     setStatus("idle");
-    setTimeLeft(GAME_TIME_SECONDS);
+    setTimeLeft(DIFFICULTIES[difficulty].durationSeconds);
     setInput("");
     setAttackCombo(0);
     setRomajiOffset(0);
     setIsResolving(false);
     setWrongIndex(null);
     setEnemyHit(false);
-  }, [audio]);
+  }, [audio, difficulty]);
 
   const openLeaderboard = useCallback(
     (selectedDifficulty: Difficulty = difficulty) => {
@@ -1974,7 +2035,7 @@ export function NinjaTypingGame() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
 
-  const progress = Math.max(0, Math.min(100, (timeLeft / GAME_TIME_SECONDS) * 100));
+  const progress = Math.max(0, Math.min(100, (timeLeft / gameDurationSeconds) * 100));
 
   const handleButtonPointerDown = useCallback(
     (event: ReactPointerEvent<HTMLElement>) => {
@@ -2107,7 +2168,7 @@ export function NinjaTypingGame() {
                         >
                           <span>
                             <strong>{item.label}</strong>
-                            <small>{item.subtitle}</small>
+                            <small>{item.subtitle} / {item.durationSeconds}s</small>
                           </span>
                           <em>{item.description}</em>
                         </button>
@@ -2165,7 +2226,7 @@ export function NinjaTypingGame() {
                 <motion.div className="timer-fill" animate={{ width: `${progress}%` }} transition={{ duration: 0.18 }} />
               </div>
 
-              <div className="arena-panel">
+              <div className={`arena-panel ${playerSettings.promptLayout === "promptTop" ? "arena-prompt-top" : ""}`}>
                 <div className="arena-topline">
                   <span>{DIFFICULTIES[difficulty].label} mode</span>
                   <span>Accuracy {accuracy}%</span>
@@ -2340,6 +2401,7 @@ export function NinjaTypingGame() {
               <div className="result-grid">
                 <StatTile label="Accuracy" value={`${accuracy}%`} />
                 <StatTile label="Max Combo" value={`x${metrics.maxCombo}`} accent="gold" />
+                <StatTile label="CPM" value={cpm} accent="cyan" />
                 <StatTile label="Typed" value={metrics.totalKeys} />
                 <StatTile label="Miss" value={metrics.misses} accent="red" />
                 <StatTile label="Targets" value={metrics.clearedWords} accent="gold" />
@@ -2352,6 +2414,7 @@ export function NinjaTypingGame() {
                   accuracy={accuracy}
                   maxCombo={metrics.maxCombo}
                   missCount={metrics.misses}
+                  cpm={cpm}
                   difficulty={difficulty}
                   onSubmitted={handleLeaderboardSubmitted}
                 />
@@ -2501,6 +2564,7 @@ export function NinjaTypingGame() {
                 settings={playerSettings}
                 soundEnabled={soundEnabled}
                 onSettingChange={updatePlayerSetting}
+                onPromptLayoutChange={updatePromptLayout}
                 onSoundChange={updateSoundEnabled}
               />
               <div className="result-actions">
