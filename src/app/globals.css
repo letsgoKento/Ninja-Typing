@@ -4187,3 +4187,40 @@ button {
     overflow-y: auto;
   }
 }
+
+.status-playing.app-root {
+  height: 100dvh;
+  min-height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+.status-playing .app-fit-viewport {
+  height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
+}
+
+.status-playing .app-fit-stage {
+  height: var(--app-design-height);
+  overflow: hidden;
+}
+
+.status-playing .app-shell {
+  height: var(--app-design-height);
+  min-height: var(--app-design-height);
+  overflow: hidden;
+}
+
+.status-playing .app-content {
+  height: calc(var(--app-design-height) - 34px);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.status-playing .game-layout {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+}

@@ -93,7 +93,7 @@ const RESULT_SHORTCUT_GRACE_MS = 850;
 const APP_DESIGN_WIDTH = 1720;
 const APP_DESIGN_HEIGHTS: Record<GameStatus, number> = {
   idle: 900,
-  playing: 900,
+  playing: 1000,
   finished: 1080,
   leaderboard: 980,
   auth: 980,
@@ -1343,7 +1343,7 @@ export function NinjaTypingGame() {
   }, [appDesignHeight]);
 
   useEffect(() => {
-    if (status !== "idle" || typeof window === "undefined") {
+    if ((status !== "idle" && status !== "playing") || typeof window === "undefined") {
       return;
     }
 
