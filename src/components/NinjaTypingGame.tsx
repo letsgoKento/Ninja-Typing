@@ -94,7 +94,7 @@ const RESULT_SHORTCUT_GRACE_MS = 850;
 const APP_DESIGN_WIDTH = 1720;
 const APP_DESIGN_HEIGHTS: Record<GameStatus, number> = {
   idle: 900,
-  playing: 960,
+  playing: 900,
   finished: 1080,
   leaderboard: 980,
   auth: 980,
@@ -310,7 +310,7 @@ function getWordFontSize(length: number) {
     return "clamp(2.45rem, 4.3vw, 4.4rem)";
   }
 
-  return "clamp(2.65rem, 4.6vw, 4.65rem)";
+  return "clamp(2.85rem, 5vw, 5.1rem)";
 }
 
 function getJapaneseFontSize(length: number) {
@@ -346,7 +346,7 @@ function getJapaneseFontSize(length: number) {
     return "clamp(3.25rem, 5.25vw, 5.2rem)";
   }
 
-  return "clamp(3.55rem, 5.9vw, 5.85rem)";
+  return "clamp(4.05rem, 6.65vw, 6.55rem)";
 }
 
 function getKanaFontSize(length: number) {
