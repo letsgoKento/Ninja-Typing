@@ -88,6 +88,7 @@ const JA_TITLE = "\u5fcd\u8005\u30bf\u30a4\u30d4\u30f3\u30b0";
 const SPACE_MARK = "\u00a0";
 const PLAYER_SETTINGS_KEY = "ninja-typing-player-settings";
 const SOUND_SETTINGS_KEY = "ninja-typing-sound-enabled";
+const GAME_VERSION = "v1.0.0";
 const RESULT_SHORTCUT_GRACE_MS = 850;
 const disabledProgress: ReadingProgress = { completed: 0, activeStart: -1, activeEnd: -1 };
 
@@ -338,7 +339,7 @@ function getAttackIntensity(combo: number) {
 }
 
 function getShurikenCount(combo: number) {
-  return Math.max(1, Math.max(0, combo));
+  return Math.max(1, Math.floor(Math.max(0, combo) / 3) + 1);
 }
 
 function getHitBurstCount(combo: number) {
@@ -2257,6 +2258,9 @@ export function NinjaTypingGame() {
                   <p className="inline-flex rounded-full border border-cyan-300/25 bg-cyan-300/10 px-4 py-2 text-sm font-bold text-cyan-100 shadow-neon-cyan">
                     {COPY.countdown}
                   </p>
+                  <span className="version-badge" aria-label={`現在のバージョン ${GAME_VERSION}`}>
+                    Release {GAME_VERSION}
+                  </span>
                   <button className="settings-pill-button" type="button" onClick={openSettings} aria-label="プレイ設定を開く">
                     設定
                   </button>
