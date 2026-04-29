@@ -4276,7 +4276,7 @@ button {
 
 .status-playing .arena-prompt-top .stage::before {
   right: 12%;
-  bottom: 88px;
+  bottom: clamp(68px, calc(180px - 10.5dvh), 88px);
   left: 12%;
   z-index: 0;
   opacity: 0.98;
