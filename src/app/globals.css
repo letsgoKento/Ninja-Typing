@@ -4226,52 +4226,66 @@ button {
 }
 
 .status-playing .arena-prompt-top .typing-zone {
-  margin-top: clamp(10px, 1.7dvh, 18px);
-  margin-bottom: clamp(8px, 1.2dvh, 14px);
+  gap: clamp(5px, 0.8dvh, 9px);
+  margin-top: clamp(4px, 0.8dvh, 10px);
+  margin-bottom: clamp(2px, 0.5dvh, 6px);
 }
 
 .status-playing .arena-prompt-top .prompt-row {
-  min-height: clamp(146px, 21dvh, 198px);
+  min-height: clamp(124px, 18dvh, 174px);
 }
 
 .status-playing .arena-prompt-top .prompt-stack {
-  min-height: clamp(118px, 16.5dvh, 162px);
-  gap: clamp(0.54rem, 0.9dvh, 0.82rem);
+  min-height: clamp(104px, 14.5dvh, 142px);
+  gap: clamp(0.42rem, 0.72dvh, 0.7rem);
+  padding-top: 0.2rem;
+}
+
+.status-playing .arena-prompt-top .combo-callout-lane {
+  height: clamp(24px, 3.2dvh, 34px);
+  min-height: clamp(24px, 3.2dvh, 34px);
 }
 
 .status-playing .arena-prompt-top .stage {
-  flex: 1 0 clamp(270px, 36dvh, 360px);
-  padding-bottom: 62px;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding-top: clamp(10px, 1.6dvh, 20px);
+  padding-bottom: clamp(78px, 10dvh, 104px);
 }
 
 .status-playing .arena-prompt-top .ninja-wrap {
-  min-height: clamp(112px, 16dvh, 160px);
-  padding-bottom: 18px;
+  min-height: clamp(100px, 14dvh, 142px);
+  padding-bottom: 24px;
 }
 
 .status-playing .arena-prompt-top .ninja-aura {
-  width: clamp(124px, 12.8vw, 178px);
+  width: clamp(112px, 11.4vw, 160px);
 }
 
 .status-playing .arena-prompt-top .ninja-svg {
-  width: clamp(94px, 10.5vw, 154px);
+  width: clamp(84px, 9.4vw, 138px);
 }
 
 .status-playing .arena-prompt-top .enemy-wrap {
-  width: clamp(70px, 8.4vw, 118px);
+  width: clamp(64px, 7.4vw, 104px);
 }
 
 .status-playing .arena-prompt-top .enemy-boss {
-  width: clamp(82px, 9.2vw, 130px);
+  width: clamp(74px, 8.2vw, 116px);
 }
 
 .status-playing .arena-prompt-top .stage::before {
-  bottom: 28%;
+  right: 12%;
+  bottom: clamp(74px, 9dvh, 96px);
+  left: 12%;
+  z-index: 0;
+  opacity: 0.98;
 }
 
 .status-playing .word-display {
-  min-height: clamp(66px, 9.2dvh, 92px);
+  min-height: clamp(58px, 8.2dvh, 82px);
   justify-content: center;
+  padding-block: clamp(0.35rem, 0.9dvh, 0.85rem);
 }
 
 .status-playing .word-track {

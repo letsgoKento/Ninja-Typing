@@ -263,7 +263,7 @@ function createEnemyConfig(id: number, targetCombo = 1): EnemyConfig {
     id,
     label: boss ? bossEnemyNames[id % bossEnemyNames.length] : enemyNames[id % enemyNames.length],
     left: 58 + Math.random() * 30,
-    top: 24 + Math.random() * 24,
+    top: 18 + Math.random() * 22,
     scale: (boss ? 1.08 : 0.86) + Math.random() * (boss ? 0.18 : 0.24),
     variant: id % 4,
     boss
