@@ -87,13 +87,14 @@ type BooleanPlayerSettingKey = Exclude<keyof PlayerSettings, "promptLayout">;
 const JA_TITLE = "\u5fcd\u8005\u30bf\u30a4\u30d4\u30f3\u30b0";
 const SPACE_MARK = "\u00a0";
 const PLAYER_SETTINGS_KEY = "ninja-typing-player-settings";
+const PROMPT_LAYOUT_TOUCHED_KEY = "ninja-typing-prompt-layout-touched";
 const SOUND_SETTINGS_KEY = "ninja-typing-sound-enabled";
 const GAME_VERSION = "v1.0.0";
 const RESULT_SHORTCUT_GRACE_MS = 850;
 const APP_DESIGN_WIDTH = 1720;
 const APP_DESIGN_HEIGHTS: Record<GameStatus, number> = {
   idle: 900,
-  playing: 1000,
+  playing: 960,
   finished: 1080,
   leaderboard: 980,
   auth: 980,
@@ -113,7 +114,7 @@ type AppRootStyle = CSSProperties & {
 };
 
 const defaultPlayerSettings: PlayerSettings = {
-  promptLayout: "stageTop",
+  promptLayout: "promptTop",
   comboEffects: true,
   kanaProgress: true,
   textProgress: true,
@@ -277,67 +278,95 @@ function getEnemySlashPosition(config: EnemyConfig, spread = 9) {
 }
 
 function getWordFontSize(length: number) {
+  if (length >= 64) {
+    return "clamp(1.05rem, 1.9vw, 2rem)";
+  }
+
+  if (length >= 52) {
+    return "clamp(1.15rem, 2.05vw, 2.15rem)";
+  }
+
+  if (length >= 42) {
+    return "clamp(1.28rem, 2.22vw, 2.35rem)";
+  }
+
+  if (length >= 34) {
+    return "clamp(1.45rem, 2.5vw, 2.65rem)";
+  }
+
   if (length >= 28) {
-    return "clamp(1.05rem, 2.1vw, 2.25rem)";
+    return "clamp(1.65rem, 2.9vw, 3rem)";
   }
 
   if (length >= 23) {
-    return "clamp(1.2rem, 2.45vw, 2.7rem)";
+    return "clamp(1.85rem, 3.3vw, 3.4rem)";
   }
 
   if (length >= 18) {
-    return "clamp(1.45rem, 3.05vw, 3.25rem)";
+    return "clamp(2.1rem, 3.7vw, 3.8rem)";
   }
 
   if (length >= 14) {
-    return "clamp(1.8rem, 3.7vw, 4rem)";
+    return "clamp(2.45rem, 4.3vw, 4.4rem)";
   }
 
-  return "clamp(2.05rem, 4.5vw, 4.7rem)";
+  return "clamp(2.85rem, 5vw, 5.2rem)";
 }
 
 function getJapaneseFontSize(length: number) {
+  if (length >= 36) {
+    return "clamp(1.18rem, 2.1vw, 1.82rem)";
+  }
+
+  if (length >= 30) {
+    return "clamp(1.35rem, 2.45vw, 2.25rem)";
+  }
+
+  if (length >= 24) {
+    return "clamp(1.65rem, 2.85vw, 2.75rem)";
+  }
+
   if (length >= 21) {
-    return "clamp(1.05rem, 2.28vw, 2.15rem)";
+    return "clamp(1.85rem, 3.15vw, 3.15rem)";
   }
 
   if (length >= 18) {
-    return "clamp(1.18rem, 2.55vw, 2.55rem)";
+    return "clamp(2.05rem, 3.5vw, 3.45rem)";
   }
 
   if (length >= 15) {
-    return "clamp(1.35rem, 2.9vw, 3rem)";
+    return "clamp(2.35rem, 4vw, 3.95rem)";
   }
 
   if (length >= 12) {
-    return "clamp(1.55rem, 3.35vw, 3.55rem)";
+    return "clamp(2.75rem, 4.65vw, 4.55rem)";
   }
 
   if (length >= 9) {
-    return "clamp(1.82rem, 3.85vw, 4.15rem)";
+    return "clamp(3.25rem, 5.25vw, 5.2rem)";
   }
 
-  return "clamp(2.6rem, 5.4vw, 5.8rem)";
+  return "clamp(4.1rem, 6.8vw, 6.8rem)";
 }
 
 function getKanaFontSize(length: number) {
   if (length >= 30) {
-    return "clamp(0.72rem, 1.05vw, 1.02rem)";
+    return "clamp(0.95rem, 1.35vw, 1.25rem)";
   }
 
   if (length >= 24) {
-    return "clamp(0.82rem, 1.22vw, 1.12rem)";
+    return "clamp(1.05rem, 1.5vw, 1.38rem)";
   }
 
   if (length >= 18) {
-    return "clamp(0.94rem, 1.42vw, 1.26rem)";
+    return "clamp(1.18rem, 1.72vw, 1.55rem)";
   }
 
   if (length >= 12) {
-    return "clamp(1rem, 1.58vw, 1.38rem)";
+    return "clamp(1.28rem, 1.92vw, 1.72rem)";
   }
 
-  return "clamp(1.08rem, 1.75vw, 1.5rem)";
+  return "clamp(1.45rem, 2.16vw, 1.9rem)";
 }
 
 function getPromptFontSizes(prompt: TypingPrompt): PromptFontSizes {
@@ -1362,7 +1391,13 @@ export function NinjaTypingGame() {
 
     if (savedSettings) {
       try {
-        setPlayerSettings(normalizePlayerSettings(JSON.parse(savedSettings)));
+        const normalized = normalizePlayerSettings(JSON.parse(savedSettings));
+
+        if (!window.localStorage.getItem(PROMPT_LAYOUT_TOUCHED_KEY)) {
+          normalized.promptLayout = defaultPlayerSettings.promptLayout;
+        }
+
+        setPlayerSettings(normalized);
       } catch {
         setPlayerSettings(defaultPlayerSettings);
       }
@@ -1612,6 +1647,11 @@ export function NinjaTypingGame() {
   const updatePromptLayout = useCallback((value: PromptLayout) => {
     setPlayerSettings((previous) => {
       const next = { ...previous, promptLayout: value };
+
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(PROMPT_LAYOUT_TOUCHED_KEY, "true");
+      }
+
       savePlayerSettings(next);
 
       return next;

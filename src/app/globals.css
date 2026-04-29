@@ -4224,3 +4224,25 @@ button {
   min-height: 0;
   overflow: hidden;
 }
+
+.status-playing .arena-prompt-top .typing-zone {
+  margin-top: clamp(14px, 2.2dvh, 24px);
+  margin-bottom: clamp(10px, 1.7dvh, 18px);
+}
+
+.status-playing .arena-prompt-top .prompt-row {
+  min-height: clamp(168px, 24dvh, 228px);
+}
+
+.status-playing .arena-prompt-top .prompt-stack {
+  min-height: clamp(136px, 19dvh, 188px);
+  gap: clamp(0.72rem, 1.2dvh, 1rem);
+}
+
+.status-playing .word-display {
+  min-height: clamp(72px, 10.5dvh, 104px);
+}
+
+.status-playing .word-track {
+  margin-inline: 0 auto;
+}
