@@ -100,7 +100,7 @@ const APP_DESIGN_HEIGHTS: Record<GameStatus, number> = {
   help: 980,
   score: 980,
   controls: 980,
-  settings: 980
+  settings: 1120
 };
 const MAX_SHURIKEN_COUNT = 8;
 const MAX_ACTIVE_EFFECTS = 32;
@@ -109,6 +109,7 @@ const disabledProgress: ReadingProgress = { completed: 0, activeStart: -1, activ
 type AppRootStyle = CSSProperties & {
   "--app-scale": number;
   "--app-design-height": string;
+  "--app-scaled-height": string;
 };
 
 const defaultPlayerSettings: PlayerSettings = {
@@ -1298,7 +1299,8 @@ export function NinjaTypingGame() {
   const appRootStyle = useMemo<AppRootStyle>(
     () => ({
       "--app-scale": appScale,
-      "--app-design-height": `${appDesignHeight}px`
+      "--app-design-height": `${appDesignHeight}px`,
+      "--app-scaled-height": `${Math.ceil(appDesignHeight * appScale)}px`
     }),
     [appDesignHeight, appScale]
   );
@@ -2639,6 +2641,18 @@ export function NinjaTypingGame() {
                 <StatTile label="Difficulty" value={DIFFICULTIES[difficulty].label} />
               </div>
 
+              <div className="result-actions result-actions-primary">
+                <button className="start-button" type="button" onClick={startGame} aria-label="もう一度プレイする">
+                  もう一度
+                </button>
+                <button className="ghost-button" type="button" onClick={() => openLeaderboard(difficulty)} aria-label="ランキングを見る">
+                  ランキング
+                </button>
+                <button className="ghost-button" type="button" onClick={returnToTitle} aria-label="タイトル画面へ戻る">
+                  タイトル
+                </button>
+              </div>
+
               <div className="post-result-grid">
                 <ScoreSubmitForm
                   score={metrics.score}
@@ -2650,18 +2664,6 @@ export function NinjaTypingGame() {
                   onSubmitted={handleLeaderboardSubmitted}
                 />
                 <Leaderboard initialDifficulty={leaderboardDifficulty} highlightId={submittedLeaderboardId} refreshToken={submittedLeaderboardId ?? metrics.score} />
-              </div>
-
-              <div className="result-actions">
-                <button className="start-button" type="button" onClick={startGame} aria-label="もう一度プレイする">
-                  もう一度
-                </button>
-                <button className="ghost-button" type="button" onClick={() => openLeaderboard(difficulty)} aria-label="ランキングを見る">
-                  ランキング
-                </button>
-                <button className="ghost-button" type="button" onClick={returnToTitle} aria-label="タイトル画面へ戻る">
-                  タイトル
-                </button>
               </div>
             </motion.section>
           ) : null}

@@ -3999,15 +3999,33 @@ button {
 }
 
 .app-root {
-  min-height: 100dvh;
+  min-height: max(100dvh, var(--app-scaled-height));
+}
+
+.app-root:not(.status-idle) + .seo-content {
+  display: none;
 }
 
 .app-root .app-fit-viewport {
   display: flex;
   width: 100vw;
-  height: 100dvh;
+  min-height: 100dvh;
+  height: max(100dvh, var(--app-scaled-height));
   justify-content: center;
+  overflow: visible;
+}
+
+.status-idle .app-fit-viewport {
   overflow: hidden;
+}
+
+.app-root:not(.status-idle):not(.status-playing) .app-fit-viewport {
+  height: auto;
+}
+
+.app-root:not(.status-idle):not(.status-playing) .app-fit-stage {
+  height: auto;
+  min-height: var(--app-design-height);
 }
 
 .app-root .app-fit-stage {
@@ -4089,6 +4107,13 @@ button {
 
 .app-root .result-grid {
   grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.app-root .result-actions-primary {
+  position: relative;
+  z-index: 6;
+  margin-top: -2px;
+  margin-bottom: 2px;
 }
 
 .app-root .stage {
