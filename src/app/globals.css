@@ -4239,10 +4239,41 @@ button {
   gap: clamp(0.72rem, 1.2dvh, 1rem);
 }
 
+.status-playing .arena-prompt-top .stage {
+  flex-basis: clamp(230px, 32dvh, 320px);
+  padding-bottom: 34px;
+}
+
+.status-playing .arena-prompt-top .ninja-wrap {
+  min-height: clamp(126px, 18dvh, 184px);
+  padding-bottom: 10px;
+}
+
+.status-playing .arena-prompt-top .ninja-aura {
+  width: clamp(140px, 14vw, 198px);
+}
+
+.status-playing .arena-prompt-top .ninja-svg {
+  width: clamp(104px, 12vw, 176px);
+}
+
+.status-playing .arena-prompt-top .enemy-wrap {
+  width: clamp(78px, 9.5vw, 136px);
+}
+
+.status-playing .arena-prompt-top .enemy-boss {
+  width: clamp(90px, 10vw, 148px);
+}
+
+.status-playing .arena-prompt-top .stage::before {
+  bottom: 22%;
+}
+
 .status-playing .word-display {
   min-height: clamp(72px, 10.5dvh, 104px);
+  justify-content: center;
 }
 
 .status-playing .word-track {
-  margin-inline: 0 auto;
+  margin-inline: auto;
 }
