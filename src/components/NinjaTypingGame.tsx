@@ -1760,22 +1760,22 @@ export function NinjaTypingGame() {
           </div>
           <div className="header-actions">
             {status !== "playing" ? (
-              <button className="icon-button wide-icon-button settings-header-button" type="button" onClick={openSettings}>
+              <button className="icon-button wide-icon-button settings-header-button" type="button" onClick={openSettings} aria-label="プレイ設定を開く">
                 設定
               </button>
             ) : null}
             {status !== "playing" ? (
-              <button className="icon-button wide-icon-button" type="button" onClick={() => openLeaderboard()}>
+              <button className="icon-button wide-icon-button" type="button" onClick={() => openLeaderboard()} aria-label="ランキングを見る">
                 ランキング
               </button>
             ) : null}
             {status !== "playing" ? (
-              <button className="icon-button wide-icon-button" type="button" onClick={openHelp}>
+              <button className="icon-button wide-icon-button" type="button" onClick={openHelp} aria-label="遊び方を見る">
                 遊び方
               </button>
             ) : null}
             {status !== "playing" ? (
-              <button className="icon-button account-header-button" type="button" onClick={openAuth}>
+              <button className="icon-button account-header-button" type="button" onClick={openAuth} aria-label="会員登録またはログイン画面を開く">
                 {session ? username || getFallbackUsername(session) : "会員登録 / ログイン"}
               </button>
             ) : null}
@@ -1806,7 +1806,7 @@ export function NinjaTypingGame() {
                   <p className="inline-flex rounded-full border border-cyan-300/25 bg-cyan-300/10 px-4 py-2 text-sm font-bold text-cyan-100 shadow-neon-cyan">
                     {COPY.countdown}
                   </p>
-                  <button className="settings-pill-button" type="button" onClick={openSettings}>
+                  <button className="settings-pill-button" type="button" onClick={openSettings} aria-label="プレイ設定を開く">
                     設定
                   </button>
                 </div>
@@ -1855,16 +1855,16 @@ export function NinjaTypingGame() {
                     <span className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">最高スコア</span>
                     <p className="mt-1 text-3xl font-black text-amber-200">{bestScore.toLocaleString()}</p>
                   </div>
-                  <button className="start-button" type="button" onClick={startGame}>
+                  <button className="start-button" type="button" onClick={startGame} aria-label="ゲームを開始する">
                     開始
                   </button>
-                  <button className="ghost-button compact-button" type="button" onClick={() => openLeaderboard(difficulty)}>
+                  <button className="ghost-button compact-button" type="button" onClick={() => openLeaderboard(difficulty)} aria-label="選択中の難易度のランキングを見る">
                     ランキング
                   </button>
-                  <button className="ghost-button compact-button" type="button" onClick={openHelp}>
+                  <button className="ghost-button compact-button" type="button" onClick={openHelp} aria-label="遊び方を見る">
                     遊び方
                   </button>
-                  <button className="x-share-button compact-button" type="button" onClick={() => openShareOnce(createGameShareUrl())}>
+                  <button className="x-share-button compact-button" type="button" onClick={() => openShareOnce(createGameShareUrl())} aria-label="Ninja TypingをXで共有する">
                     <span className="x-logo" aria-hidden="true">X</span>
                     <span className="x-label">Xでポスト</span>
                   </button>
@@ -2046,6 +2046,7 @@ export function NinjaTypingGame() {
                   <button
                     className="x-share-button x-share-button-result"
                     type="button"
+                    aria-label="今回のスコアをXで共有する"
                     onClick={() =>
                       openShareOnce(
                         createScoreShareUrl({
@@ -2086,13 +2087,13 @@ export function NinjaTypingGame() {
               </div>
 
               <div className="result-actions">
-                <button className="start-button" type="button" onClick={startGame}>
+                <button className="start-button" type="button" onClick={startGame} aria-label="もう一度プレイする">
                   もう一度
                 </button>
-                <button className="ghost-button" type="button" onClick={() => openLeaderboard(difficulty)}>
+                <button className="ghost-button" type="button" onClick={() => openLeaderboard(difficulty)} aria-label="ランキングを見る">
                   ランキング
                 </button>
-                <button className="ghost-button" type="button" onClick={returnToTitle}>
+                <button className="ghost-button" type="button" onClick={returnToTitle} aria-label="タイトル画面へ戻る">
                   タイトル
                 </button>
               </div>
@@ -2110,10 +2111,10 @@ export function NinjaTypingGame() {
             >
               <Leaderboard initialDifficulty={leaderboardDifficulty} highlightId={submittedLeaderboardId} refreshToken={submittedLeaderboardId ?? "leaderboard"} />
               <div className="result-actions">
-                <button className="start-button" type="button" onClick={startGame}>
+                <button className="start-button" type="button" onClick={startGame} aria-label="ゲームを開始する">
                   Play
                 </button>
-                <button className="ghost-button" type="button" onClick={returnToTitle}>
+                <button className="ghost-button" type="button" onClick={returnToTitle} aria-label="タイトル画面へ戻る">
                   タイトル
                 </button>
               </div>
@@ -2136,10 +2137,10 @@ export function NinjaTypingGame() {
                 onSignOut={handleSignOut}
               />
               <div className="result-actions">
-                <button className="start-button" type="button" onClick={startGame}>
+                <button className="start-button" type="button" onClick={startGame} aria-label="ゲームを開始する">
                   Start
                 </button>
-                <button className="ghost-button" type="button" onClick={returnToTitle}>
+                <button className="ghost-button" type="button" onClick={returnToTitle} aria-label="タイトル画面へ戻る">
                   タイトル
                 </button>
               </div>
@@ -2157,10 +2158,10 @@ export function NinjaTypingGame() {
             >
               <HowToPlayPanel />
               <div className="result-actions">
-                <button className="start-button" type="button" onClick={startGame}>
+                <button className="start-button" type="button" onClick={startGame} aria-label="ゲームを開始する">
                   Start
                 </button>
-                <button className="ghost-button" type="button" onClick={returnToTitle}>
+                <button className="ghost-button" type="button" onClick={returnToTitle} aria-label="タイトル画面へ戻る">
                   タイトル
                 </button>
               </div>
@@ -2183,10 +2184,10 @@ export function NinjaTypingGame() {
                 onSoundChange={updateSoundEnabled}
               />
               <div className="result-actions">
-                <button className="start-button" type="button" onClick={startGame}>
+                <button className="start-button" type="button" onClick={startGame} aria-label="ゲームを開始する">
                   Start
                 </button>
-                <button className="ghost-button" type="button" onClick={returnToTitle}>
+                <button className="ghost-button" type="button" onClick={returnToTitle} aria-label="タイトル画面へ戻る">
                   タイトル
                 </button>
               </div>
