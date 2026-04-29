@@ -438,36 +438,37 @@ function useNinjaAudio(enabled: boolean) {
 
       if (kind === "finisher") {
         const tier = Math.min(4, Math.max(1, Math.floor(combo / 5)));
+        const isFirstTier = tier === 1;
 
-        oscillator.type = "sawtooth";
-        oscillator.frequency.setValueAtTime(170 + tier * 24, now);
-        oscillator.frequency.exponentialRampToValueAtTime(1040 + tier * 120, now + 0.1);
-        oscillator.frequency.exponentialRampToValueAtTime(320 + tier * 42, now + 0.2);
-        gain.gain.setValueAtTime(0.078 + tier * 0.012, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.23);
+        oscillator.type = isFirstTier ? "sine" : "triangle";
+        oscillator.frequency.setValueAtTime(isFirstTier ? 360 : 260 + tier * 34, now);
+        oscillator.frequency.exponentialRampToValueAtTime(isFirstTier ? 620 : 900 + tier * 120, now + 0.1);
+        oscillator.frequency.exponentialRampToValueAtTime(isFirstTier ? 420 : 360 + tier * 44, now + 0.22);
+        gain.gain.setValueAtTime(isFirstTier ? 0.038 : 0.056 + tier * 0.01, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.26);
         oscillator.start(now);
-        oscillator.stop(now + 0.24);
+        oscillator.stop(now + 0.27);
 
         const blade = context.createOscillator();
         const bladeGain = context.createGain();
         blade.connect(bladeGain);
         bladeGain.connect(context.destination);
         blade.type = "triangle";
-        blade.frequency.setValueAtTime(1160 + tier * 130, now + 0.04);
-        blade.frequency.exponentialRampToValueAtTime(500 + tier * 44, now + 0.19);
-        bladeGain.gain.setValueAtTime(0.058 + tier * 0.012, now + 0.04);
-        bladeGain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+        blade.frequency.setValueAtTime(isFirstTier ? 860 : 1160 + tier * 130, now + 0.04);
+        blade.frequency.exponentialRampToValueAtTime(isFirstTier ? 520 : 500 + tier * 44, now + 0.2);
+        bladeGain.gain.setValueAtTime(isFirstTier ? 0.032 : 0.052 + tier * 0.011, now + 0.04);
+        bladeGain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
         blade.start(now + 0.04);
-        blade.stop(now + 0.24);
+        blade.stop(now + 0.26);
 
         const impact = context.createOscillator();
         const impactGain = context.createGain();
         impact.connect(impactGain);
         impactGain.connect(context.destination);
         impact.type = "sine";
-        impact.frequency.setValueAtTime(92 + tier * 10, now + 0.12);
-        impact.frequency.exponentialRampToValueAtTime(54 + tier * 4, now + 0.32);
-        impactGain.gain.setValueAtTime(0.068 + tier * 0.012, now + 0.12);
+        impact.frequency.setValueAtTime(isFirstTier ? 118 : 92 + tier * 10, now + 0.12);
+        impact.frequency.exponentialRampToValueAtTime(isFirstTier ? 82 : 54 + tier * 4, now + 0.32);
+        impactGain.gain.setValueAtTime(isFirstTier ? 0.032 : 0.058 + tier * 0.011, now + 0.12);
         impactGain.gain.exponentialRampToValueAtTime(0.001, now + 0.34);
         impact.start(now + 0.12);
         impact.stop(now + 0.36);
