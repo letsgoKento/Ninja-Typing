@@ -4226,51 +4226,51 @@ button {
 }
 
 .status-playing .arena-prompt-top .typing-zone {
-  margin-top: clamp(14px, 2.2dvh, 24px);
-  margin-bottom: clamp(10px, 1.7dvh, 18px);
+  margin-top: clamp(10px, 1.7dvh, 18px);
+  margin-bottom: clamp(8px, 1.2dvh, 14px);
 }
 
 .status-playing .arena-prompt-top .prompt-row {
-  min-height: clamp(168px, 24dvh, 228px);
+  min-height: clamp(146px, 21dvh, 198px);
 }
 
 .status-playing .arena-prompt-top .prompt-stack {
-  min-height: clamp(136px, 19dvh, 188px);
-  gap: clamp(0.72rem, 1.2dvh, 1rem);
+  min-height: clamp(118px, 16.5dvh, 162px);
+  gap: clamp(0.54rem, 0.9dvh, 0.82rem);
 }
 
 .status-playing .arena-prompt-top .stage {
-  flex-basis: clamp(230px, 32dvh, 320px);
-  padding-bottom: 34px;
+  flex: 1 0 clamp(270px, 36dvh, 360px);
+  padding-bottom: 62px;
 }
 
 .status-playing .arena-prompt-top .ninja-wrap {
-  min-height: clamp(126px, 18dvh, 184px);
-  padding-bottom: 10px;
+  min-height: clamp(112px, 16dvh, 160px);
+  padding-bottom: 18px;
 }
 
 .status-playing .arena-prompt-top .ninja-aura {
-  width: clamp(140px, 14vw, 198px);
+  width: clamp(124px, 12.8vw, 178px);
 }
 
 .status-playing .arena-prompt-top .ninja-svg {
-  width: clamp(104px, 12vw, 176px);
+  width: clamp(94px, 10.5vw, 154px);
 }
 
 .status-playing .arena-prompt-top .enemy-wrap {
-  width: clamp(78px, 9.5vw, 136px);
+  width: clamp(70px, 8.4vw, 118px);
 }
 
 .status-playing .arena-prompt-top .enemy-boss {
-  width: clamp(90px, 10vw, 148px);
+  width: clamp(82px, 9.2vw, 130px);
 }
 
 .status-playing .arena-prompt-top .stage::before {
-  bottom: 22%;
+  bottom: 28%;
 }
 
 .status-playing .word-display {
-  min-height: clamp(72px, 10.5dvh, 104px);
+  min-height: clamp(66px, 9.2dvh, 92px);
   justify-content: center;
 }
 

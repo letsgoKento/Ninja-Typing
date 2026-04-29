@@ -263,7 +263,7 @@ function createEnemyConfig(id: number, targetCombo = 1): EnemyConfig {
     id,
     label: boss ? bossEnemyNames[id % bossEnemyNames.length] : enemyNames[id % enemyNames.length],
     left: 58 + Math.random() * 30,
-    top: 26 + Math.random() * 32,
+    top: 24 + Math.random() * 24,
     scale: (boss ? 1.08 : 0.86) + Math.random() * (boss ? 0.18 : 0.24),
     variant: id % 4,
     boss
@@ -310,7 +310,7 @@ function getWordFontSize(length: number) {
     return "clamp(2.45rem, 4.3vw, 4.4rem)";
   }
 
-  return "clamp(2.85rem, 5vw, 5.2rem)";
+  return "clamp(2.65rem, 4.6vw, 4.65rem)";
 }
 
 function getJapaneseFontSize(length: number) {
@@ -346,7 +346,7 @@ function getJapaneseFontSize(length: number) {
     return "clamp(3.25rem, 5.25vw, 5.2rem)";
   }
 
-  return "clamp(4.1rem, 6.8vw, 6.8rem)";
+  return "clamp(3.55rem, 5.9vw, 5.85rem)";
 }
 
 function getKanaFontSize(length: number) {
