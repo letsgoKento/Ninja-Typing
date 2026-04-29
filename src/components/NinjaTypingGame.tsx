@@ -2270,8 +2270,8 @@ export function NinjaTypingGame() {
                   <span className="hero-divider">/</span>
                   <span className="hero-word-secondary">{COPY.heroLine2}</span>
                 </h2>
-                <p className="mt-6 max-w-2xl text-base leading-8 text-slate-300 sm:text-lg">{COPY.intro}</p>
-                <div className="mt-8 flex flex-wrap items-center gap-3 text-sm text-slate-300">
+                <p className="title-intro mt-6 max-w-2xl text-base leading-8 text-slate-300 sm:text-lg">{COPY.intro}</p>
+                <div className="title-info-row mt-8 flex flex-wrap items-center gap-3 text-sm text-slate-300">
                   <span className="info-pill">{COPY.correctGlow}</span>
                   <span className="info-pill">{COPY.missShake}</span>
                   <span className="info-pill">{COPY.bestSaved}</span>
@@ -2305,7 +2305,7 @@ export function NinjaTypingGame() {
                   </div>
                 </div>
 
-                <div className="mt-7 flex flex-wrap items-end justify-between gap-4 border-t border-white/10 pt-6">
+                <div className="title-action-grid mt-7 flex flex-wrap items-end justify-between gap-4 border-t border-white/10 pt-6">
                   <div>
                     <span className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">最高スコア</span>
                     <p className="mt-1 text-3xl font-black text-amber-200">{bestScore.toLocaleString()}</p>

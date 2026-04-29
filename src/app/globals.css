@@ -439,6 +439,35 @@ button {
   padding: clamp(22px, 3vw, 32px);
 }
 
+.title-intro {
+  max-width: 62rem;
+}
+
+.title-info-row {
+  gap: 0.8rem;
+}
+
+.title-action-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.title-action-grid > div {
+  align-self: center;
+}
+
+.title-action-grid .start-button,
+.title-action-grid .ghost-button,
+.title-action-grid .x-share-button {
+  width: 100%;
+  min-width: 0;
+}
+
+.title-action-grid .x-share-button {
+  justify-self: start;
+}
 
 .info-pill {
   border: 1px solid rgba(148, 163, 184, 0.18);
@@ -593,6 +622,7 @@ button {
   color: #94a3b8;
   font-style: normal;
   line-height: 1.65;
+  white-space: nowrap;
 }
 
 .difficulty-button-active {
@@ -2859,6 +2889,387 @@ button {
   place-items: center;
   width: fit-content;
   text-decoration: none;
+}
+
+@media (max-width: 1700px), (max-height: 930px) {
+  .status-idle .app-shell {
+    grid-template-columns: minmax(64px, 7vw) minmax(0, 1320px) minmax(64px, 7vw);
+    gap: clamp(10px, 1.2vw, 18px);
+    padding: 10px clamp(10px, 1.2vw, 18px) 12px;
+  }
+
+  .status-idle .ad-rail {
+    min-height: min(620px, calc(100dvh - 24px));
+    border-radius: 18px;
+  }
+
+  .status-idle .app-header {
+    grid-template-columns: minmax(380px, max-content) minmax(0, 1fr);
+    gap: 0.8rem;
+  }
+
+  .status-idle .brand-title {
+    font-size: clamp(1.4rem, 1.55vw, 1.78rem);
+  }
+
+  .status-idle .header-actions {
+    flex-wrap: nowrap;
+    gap: 0.48rem;
+  }
+
+  .status-idle .icon-button {
+    min-width: 54px;
+    border-radius: 12px;
+    padding: 0.62rem 0.72rem;
+    font-size: 0.88rem;
+  }
+
+  .status-idle .wide-icon-button {
+    min-width: 74px;
+  }
+
+  .status-idle .account-header-button {
+    min-width: min(182px, 25vw);
+    max-width: 190px;
+  }
+
+  .status-idle .title-layout {
+    grid-template-columns: minmax(0, 1.55fr) minmax(300px, 0.58fr);
+    gap: clamp(18px, 2.4vw, 38px);
+    padding: clamp(18px, 3.4vh, 38px) 0 12px;
+  }
+
+  .status-idle .title-kicker-row {
+    gap: 0.58rem;
+  }
+
+  .status-idle .title-kicker-row > p,
+  .status-idle .settings-pill-button,
+  .status-idle .version-badge {
+    min-height: 2.2rem;
+    padding: 0.48rem 0.78rem;
+    font-size: 0.78rem;
+  }
+
+  .status-idle .version-badge {
+    font-size: 0.66rem;
+  }
+
+  .status-idle .hero-title {
+    margin-top: 1.08rem;
+    font-size: clamp(3rem, 4.65vw, 5.35rem);
+  }
+
+  .status-idle .title-intro {
+    max-width: 60rem;
+    margin-top: 1rem !important;
+    font-size: clamp(0.9rem, 1.02vw, 1rem) !important;
+    line-height: 1.58 !important;
+  }
+
+  .status-idle .title-info-row {
+    margin-top: 1.25rem !important;
+    gap: 0.58rem;
+  }
+
+  .status-idle .info-pill {
+    padding: 0.46rem 0.72rem;
+    font-size: 0.82rem;
+  }
+
+  .status-idle .rank-gallery {
+    max-width: none;
+    gap: 0.58rem;
+    margin-top: 0.9rem;
+    border-radius: 18px;
+    padding: 0.78rem;
+  }
+
+  .status-idle .rank-gallery-header h3 {
+    margin-top: 0.1rem;
+    font-size: 1.02rem;
+  }
+
+  .status-idle .rank-gallery-header > span {
+    font-size: 0.66rem;
+    padding: 0.32rem 0.56rem;
+  }
+
+  .status-idle .rank-gallery-list {
+    gap: 0.42rem;
+  }
+
+  .status-idle .rank-gallery-item {
+    min-height: 48px;
+    border-radius: 13px;
+    padding: 0.48rem 0.58rem;
+  }
+
+  .status-idle .rank-gallery-item strong {
+    font-size: 0.84rem;
+  }
+
+  .status-idle .rank-gallery-item em,
+  .status-idle .rank-gallery-item > span {
+    font-size: 0.62rem;
+  }
+
+  .status-idle .start-panel {
+    border-radius: 20px;
+    padding: clamp(17px, 2vw, 24px);
+  }
+
+  .status-idle .start-panel > div:first-child > p {
+    font-size: 0.76rem;
+  }
+
+  .status-idle .start-panel .mt-4 {
+    gap: 0.58rem;
+    margin-top: 0.78rem !important;
+  }
+
+  .status-idle .difficulty-button {
+    gap: 0.26rem;
+    border-radius: 14px;
+    padding: 0.68rem 0.78rem;
+  }
+
+  .status-idle .difficulty-button strong {
+    font-size: 0.9rem;
+  }
+
+  .status-idle .difficulty-button small {
+    font-size: 0.72rem;
+    white-space: nowrap;
+  }
+
+  .status-idle .difficulty-button em {
+    font-size: clamp(0.68rem, 0.8vw, 0.78rem);
+    line-height: 1.35;
+    white-space: nowrap;
+  }
+
+  .status-idle .title-action-grid {
+    gap: 0.72rem;
+    margin-top: 1rem !important;
+    padding-top: 0.9rem !important;
+  }
+
+  .status-idle .title-action-grid > div span {
+    font-size: 0.68rem;
+  }
+
+  .status-idle .title-action-grid > div p {
+    margin-top: 0.18rem;
+    font-size: 1.65rem;
+  }
+
+  .status-idle .title-action-grid .start-button,
+  .status-idle .title-action-grid .ghost-button,
+  .status-idle .title-action-grid .x-share-button {
+    min-height: 50px;
+    padding: 0.74rem 0.86rem;
+    font-size: 0.88rem;
+  }
+
+  .status-idle .x-logo {
+    width: 1.42rem;
+    border-radius: 7px;
+    font-size: 0.86rem;
+  }
+}
+
+@media (max-height: 820px) and (min-width: 981px) {
+  .moon {
+    top: 7vh;
+    width: clamp(72px, 8.8vw, 124px);
+  }
+
+  .status-idle .app-shell {
+    grid-template-columns: minmax(54px, 6.2vw) minmax(0, 1340px) minmax(54px, 6.2vw);
+    gap: 10px;
+    padding-top: 6px;
+    padding-bottom: 8px;
+  }
+
+  .status-idle .ad-rail {
+    min-height: min(560px, calc(100dvh - 16px));
+  }
+
+  .status-idle .app-header {
+    grid-template-columns: minmax(340px, max-content) minmax(0, 1fr);
+  }
+
+  .status-idle .brand-block p {
+    font-size: 0.66rem;
+    letter-spacing: 0.32em;
+  }
+
+  .status-idle .brand-title {
+    margin-top: 0.32rem !important;
+    font-size: clamp(1.22rem, 1.42vw, 1.56rem);
+  }
+
+  .status-idle .header-actions {
+    gap: 0.42rem;
+  }
+
+  .status-idle .icon-button {
+    min-width: 50px;
+    padding: 0.52rem 0.62rem;
+    font-size: 0.8rem;
+  }
+
+  .status-idle .wide-icon-button {
+    min-width: 68px;
+  }
+
+  .status-idle .account-header-button {
+    min-width: min(164px, 22vw);
+    max-width: 176px;
+  }
+
+  .status-idle .title-layout {
+    grid-template-columns: minmax(0, 1.62fr) minmax(286px, 0.56fr);
+    gap: clamp(16px, 2vw, 30px);
+    padding-top: clamp(12px, 2vh, 20px);
+    padding-bottom: 6px;
+  }
+
+  .status-idle .title-kicker-row {
+    gap: 0.48rem;
+  }
+
+  .status-idle .title-kicker-row > p,
+  .status-idle .settings-pill-button,
+  .status-idle .version-badge {
+    min-height: 2rem;
+    padding: 0.4rem 0.66rem;
+    font-size: 0.68rem;
+  }
+
+  .status-idle .version-badge {
+    font-size: 0.58rem;
+  }
+
+  .status-idle .hero-title {
+    margin-top: 0.86rem;
+    font-size: clamp(2.6rem, 4.25vw, 4.75rem);
+  }
+
+  .status-idle .title-intro {
+    margin-top: 0.74rem !important;
+    font-size: clamp(0.78rem, 0.9vw, 0.9rem) !important;
+    line-height: 1.48 !important;
+  }
+
+  .status-idle .title-info-row {
+    margin-top: 0.86rem !important;
+    gap: 0.45rem;
+  }
+
+  .status-idle .info-pill {
+    padding: 0.38rem 0.58rem;
+    font-size: 0.72rem;
+  }
+
+  .status-idle .rank-gallery {
+    gap: 0.42rem;
+    margin-top: 0.64rem;
+    border-radius: 16px;
+    padding: 0.58rem;
+  }
+
+  .status-idle .rank-gallery-header h3 {
+    font-size: 0.9rem;
+  }
+
+  .status-idle .rank-gallery-header > span {
+    font-size: 0.58rem;
+    padding: 0.26rem 0.48rem;
+  }
+
+  .status-idle .rank-gallery-list {
+    gap: 0.32rem;
+  }
+
+  .status-idle .rank-gallery-item {
+    min-height: 40px;
+    gap: 0.52rem;
+    border-radius: 12px;
+    padding: 0.34rem 0.48rem;
+  }
+
+  .status-idle .rank-gallery-item strong {
+    font-size: 0.74rem;
+  }
+
+  .status-idle .rank-gallery-item em,
+  .status-idle .rank-gallery-item > span {
+    font-size: 0.56rem;
+  }
+
+  .status-idle .start-panel {
+    border-radius: 18px;
+    padding: 0.86rem;
+  }
+
+  .status-idle .start-panel > div:first-child > p {
+    font-size: 0.68rem;
+  }
+
+  .status-idle .start-panel .mt-4 {
+    gap: 0.42rem;
+    margin-top: 0.56rem !important;
+  }
+
+  .status-idle .difficulty-button {
+    gap: 0.18rem;
+    border-radius: 12px;
+    padding: 0.48rem 0.58rem;
+  }
+
+  .status-idle .difficulty-button strong {
+    font-size: 0.8rem;
+  }
+
+  .status-idle .difficulty-button small {
+    font-size: 0.62rem;
+  }
+
+  .status-idle .difficulty-button em {
+    font-size: clamp(0.58rem, 0.7vw, 0.68rem);
+    line-height: 1.25;
+  }
+
+  .status-idle .title-action-grid {
+    gap: 0.5rem;
+    margin-top: 0.66rem !important;
+    padding-top: 0.64rem !important;
+  }
+
+  .status-idle .title-action-grid > div span {
+    font-size: 0.56rem;
+  }
+
+  .status-idle .title-action-grid > div p {
+    font-size: 1.28rem;
+  }
+
+  .status-idle .title-action-grid .start-button,
+  .status-idle .title-action-grid .ghost-button,
+  .status-idle .title-action-grid .x-share-button {
+    min-height: 42px;
+    border-radius: 12px;
+    padding: 0.54rem 0.68rem;
+    font-size: 0.78rem;
+  }
+
+  .status-idle .x-logo {
+    width: 1.2rem;
+    border-radius: 6px;
+    font-size: 0.74rem;
+  }
 }
 
 @media (max-width: 1500px) {
