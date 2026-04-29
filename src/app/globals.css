@@ -157,6 +157,23 @@ button {
   min-height: calc(100dvh - clamp(28px, 4vh, 48px));
 }
 
+.app-header {
+  display: grid;
+  grid-template-columns: minmax(310px, max-content) minmax(0, 1fr);
+  align-items: start;
+}
+
+.brand-block {
+  min-width: 0;
+}
+
+.brand-title {
+  max-width: 100%;
+  font-size: clamp(1.45rem, 1.7vw, 2rem);
+  line-height: 1.08;
+  white-space: nowrap;
+}
+
 .status-playing .app-shell {
   height: 100dvh;
   min-height: 100dvh;
@@ -210,11 +227,11 @@ button {
 
 .title-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(360px, 0.75fr);
-  gap: clamp(24px, 5vw, 72px);
-  align-items: center;
+  grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.65fr);
+  gap: clamp(22px, 3.2vw, 56px);
+  align-items: start;
   flex: 1;
-  padding: clamp(42px, 7vh, 92px) 0 28px;
+  padding: clamp(34px, 6vh, 76px) 0 28px;
 }
 
 
@@ -227,6 +244,10 @@ button {
   align-items: center;
   flex-wrap: wrap;
   gap: 0.85rem;
+}
+
+.title-kicker-row > * {
+  white-space: nowrap;
 }
 
 .settings-pill-button {
@@ -362,14 +383,15 @@ button {
 .hero-title {
   display: flex;
   align-items: baseline;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.08em 0.18em;
-  max-width: 760px;
+  max-width: 100%;
   margin-top: 1.75rem;
-  font-size: clamp(3.4rem, 7.6vw, 7.4rem);
+  font-size: clamp(3.1rem, 5.05vw, 6.55rem);
   font-weight: 950;
   letter-spacing: 0;
   line-height: 0.9;
+  white-space: nowrap;
   text-shadow: 0 0 34px rgba(34, 211, 238, 0.18), 0 20px 46px rgba(0, 0, 0, 0.45);
 }
 
@@ -712,7 +734,7 @@ button {
   align-items: center;
   justify-content: flex-end;
   flex-wrap: wrap;
-  gap: 0.7rem;
+  gap: clamp(0.5rem, 0.75vw, 0.7rem);
 }
 
 .wide-icon-button {
@@ -2839,6 +2861,61 @@ button {
   text-decoration: none;
 }
 
+@media (max-width: 1500px) {
+  .app-shell {
+    grid-template-columns: minmax(76px, 9vw) minmax(0, 1280px) minmax(76px, 9vw);
+  }
+
+  .app-header {
+    grid-template-columns: minmax(280px, max-content) minmax(0, 1fr);
+    gap: 0.85rem;
+  }
+
+  .brand-title {
+    font-size: clamp(1.42rem, 1.55vw, 1.82rem);
+  }
+
+  .icon-button {
+    min-width: 58px;
+    padding: 0.7rem 0.82rem;
+  }
+
+  .wide-icon-button {
+    min-width: 86px;
+  }
+
+  .account-header-button {
+    min-width: min(190px, 34vw);
+    max-width: 220px;
+  }
+
+  .title-layout {
+    grid-template-columns: minmax(0, 1.5fr) minmax(300px, 0.6fr);
+    gap: clamp(20px, 2.6vw, 42px);
+  }
+
+  .hero-title {
+    font-size: clamp(3rem, 4.65vw, 5.7rem);
+  }
+
+  .start-panel {
+    padding: clamp(20px, 2.35vw, 28px);
+  }
+
+  .difficulty-button {
+    padding: 0.88rem 0.95rem;
+  }
+
+  .difficulty-button em {
+    font-size: 0.92rem;
+    line-height: 1.55;
+  }
+
+  .info-pill {
+    font-size: 0.9rem;
+  }
+}
+
 @keyframes skeletonSweep {
   0% {
     background-position: 120% 0;
@@ -2901,12 +2978,26 @@ button {
     flex-direction: column;
   }
 
+  .app-header {
+    grid-template-columns: 1fr;
+  }
+
+  .brand-title {
+    white-space: normal;
+  }
+
   .header-actions {
     justify-content: flex-start;
   }
 
   .title-layout {
     grid-template-columns: 1fr;
+  }
+
+  .hero-title {
+    flex-wrap: wrap;
+    font-size: clamp(3.2rem, 12vw, 5.8rem);
+    white-space: normal;
   }
 
   .stage {

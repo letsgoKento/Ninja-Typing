@@ -2195,10 +2195,10 @@ export function NinjaTypingGame() {
         </aside>
 
         <div className={`app-content ${screenShake && playerSettings.screenShake ? "screen-shake" : ""}`}>
-        <header className="flex items-center justify-between gap-4">
-          <div>
+        <header className="app-header flex items-center justify-between gap-4">
+          <div className="brand-block">
             <p className="text-xs font-semibold uppercase tracking-[0.38em] text-cyan-200/80">Cyber Shinobi Drill</p>
-            <h1 className="mt-2 text-2xl font-black tracking-normal text-white sm:text-3xl">Ninja Typing / {JA_TITLE}</h1>
+            <h1 className="brand-title mt-2 text-2xl font-black tracking-normal text-white sm:text-3xl">Ninja Typing / {JA_TITLE}</h1>
           </div>
           <div className="header-actions">
             {status !== "playing" ? (
