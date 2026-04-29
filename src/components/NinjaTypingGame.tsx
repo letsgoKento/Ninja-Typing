@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import type { PointerEvent as ReactPointerEvent } from "react";
+import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { AuthPanel } from "@/components/AuthPanel";
 import { Leaderboard } from "@/components/Leaderboard";
@@ -90,7 +90,13 @@ const PLAYER_SETTINGS_KEY = "ninja-typing-player-settings";
 const SOUND_SETTINGS_KEY = "ninja-typing-sound-enabled";
 const GAME_VERSION = "v1.0.0";
 const RESULT_SHORTCUT_GRACE_MS = 850;
+const TITLE_DESIGN_WIDTH = 1720;
+const TITLE_DESIGN_HEIGHT = 900;
 const disabledProgress: ReadingProgress = { completed: 0, activeStart: -1, activeEnd: -1 };
+
+type AppRootStyle = CSSProperties & {
+  "--title-scale": number;
+};
 
 const defaultPlayerSettings: PlayerSettings = {
   promptLayout: "stageTop",
@@ -1242,6 +1248,7 @@ export function NinjaTypingGame() {
   const [session, setSession] = useState<Session | null>(null);
   const [username, setUsername] = useState("");
   const [unlockedRankIds, setUnlockedRankIds] = useState<string[]>([]);
+  const [titleScale, setTitleScale] = useState(1);
   const endAtRef = useRef(0);
   const metricsRef = useRef(metrics);
   const statusRef = useRef(status);
@@ -1270,6 +1277,7 @@ export function NinjaTypingGame() {
   const attackIntensity = playerSettings.comboEffects ? getAttackIntensity(attackCombo) : 0;
   const visibleReadingProgress = playerSettings.kanaProgress ? readingProgress : disabledProgress;
   const visibleTextProgress = playerSettings.textProgress ? textProgress : disabledProgress;
+  const appRootStyle = useMemo<AppRootStyle>(() => ({ "--title-scale": titleScale }), [titleScale]);
 
   useEffect(() => {
     metricsRef.current = metrics;
@@ -1277,6 +1285,34 @@ export function NinjaTypingGame() {
 
   useEffect(() => {
     statusRef.current = status;
+  }, [status]);
+
+  useLayoutEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const updateTitleScale = () => {
+      const horizontalRoom = Math.max(1, window.innerWidth - 6);
+      const verticalRoom = Math.max(1, window.innerHeight - 6);
+      const fitScale = Math.min(horizontalRoom / TITLE_DESIGN_WIDTH, verticalRoom / TITLE_DESIGN_HEIGHT);
+      setTitleScale(Number(Math.min(1.04, fitScale).toFixed(4)));
+    };
+
+    updateTitleScale();
+    window.addEventListener("resize", updateTitleScale);
+
+    return () => window.removeEventListener("resize", updateTitleScale);
+  }, []);
+
+  useEffect(() => {
+    if (status !== "idle" || typeof window === "undefined") {
+      return;
+    }
+
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    });
   }, [status]);
 
   useEffect(() => {
@@ -2175,7 +2211,11 @@ export function NinjaTypingGame() {
   );
 
   return (
-    <main className={`app-root status-${status} min-h-screen overflow-x-hidden bg-[#05070f] text-slate-100 ${auraClass}`} onPointerDownCapture={handleButtonPointerDown}>
+    <main
+      className={`app-root status-${status} min-h-screen overflow-x-hidden bg-[#05070f] text-slate-100 ${auraClass}`}
+      style={appRootStyle}
+      onPointerDownCapture={handleButtonPointerDown}
+    >
       <div className="scene-bg">
         <div className="moon" />
         <div className="castle">
@@ -2188,6 +2228,8 @@ export function NinjaTypingGame() {
         <div className="scanline" />
       </div>
 
+      <div className="app-fit-viewport">
+      <div className="app-fit-stage">
       <div className="app-shell">
         <aside className="ad-rail ad-rail-left" aria-label="広告スペース">
           <span>AD</span>
@@ -2738,6 +2780,8 @@ export function NinjaTypingGame() {
           <span>AD</span>
           <strong>広告スペース</strong>
         </aside>
+      </div>
+      </div>
       </div>
     </main>
   );

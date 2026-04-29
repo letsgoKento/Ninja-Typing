@@ -138,6 +138,16 @@ button {
   opacity: 0.12;
 }
 
+.app-fit-viewport {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+}
+
+.app-fit-stage {
+  width: 100%;
+}
+
 .app-shell {
   position: relative;
   z-index: 10;
@@ -3749,4 +3759,241 @@ button {
   .input-readout {
     font-size: 0.76rem;
   }
+}
+
+.status-idle.app-root {
+  min-height: 100dvh;
+}
+
+.status-idle .app-fit-viewport {
+  display: flex;
+  width: 100vw;
+  height: 100dvh;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.status-idle .app-fit-stage {
+  flex: 0 0 auto;
+  width: 1720px;
+  height: 900px;
+  transform: scale(var(--title-scale));
+  transform-origin: top center;
+}
+
+.status-idle .app-shell {
+  grid-template-columns: minmax(92px, 150px) minmax(0, 1280px) minmax(92px, 150px);
+  gap: 22px;
+  width: 1720px;
+  min-height: 900px;
+  padding: 16px 24px 18px;
+}
+
+.status-idle .app-content {
+  min-height: 866px;
+}
+
+.status-idle .ad-rail {
+  display: grid;
+  min-height: 860px;
+  border-radius: 22px;
+}
+
+.status-idle .app-header {
+  display: grid;
+  grid-template-columns: minmax(400px, max-content) minmax(0, 1fr);
+  align-items: start;
+  gap: 1rem;
+}
+
+.status-idle .brand-block p {
+  font-size: 0.75rem;
+  letter-spacing: 0.38em;
+}
+
+.status-idle .brand-title {
+  margin-top: 0.5rem !important;
+  font-size: 1.82rem;
+  line-height: 1.08;
+  white-space: nowrap;
+}
+
+.status-idle .header-actions {
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  gap: 0.7rem;
+}
+
+.status-idle .icon-button {
+  min-width: 64px;
+  border-radius: 14px;
+  padding: 0.8rem 0.95rem;
+  font-size: 1rem;
+}
+
+.status-idle .wide-icon-button {
+  min-width: 92px;
+}
+
+.status-idle .account-header-button {
+  min-width: min(220px, 42vw);
+  max-width: 240px;
+}
+
+.status-idle .title-layout {
+  grid-template-columns: minmax(0, 1.45fr) minmax(360px, 0.65fr);
+  gap: 56px;
+  align-items: start;
+  flex: 1;
+  padding: 58px 0 16px;
+}
+
+.status-idle .title-kicker-row {
+  gap: 0.85rem;
+}
+
+.status-idle .title-kicker-row > p,
+.status-idle .settings-pill-button,
+.status-idle .version-badge {
+  min-height: 2.45rem;
+  padding: 0.58rem 0.9rem;
+}
+
+.status-idle .title-kicker-row > p,
+.status-idle .settings-pill-button {
+  font-size: 0.9rem;
+}
+
+.status-idle .version-badge {
+  font-size: 0.72rem;
+}
+
+.status-idle .hero-title {
+  flex-wrap: nowrap;
+  margin-top: 1.65rem;
+  font-size: 5.55rem;
+  line-height: 0.9;
+  white-space: nowrap;
+}
+
+.status-idle .title-intro {
+  max-width: 62rem;
+  margin-top: 1.25rem !important;
+  font-size: 1rem !important;
+  line-height: 1.72 !important;
+}
+
+.status-idle .title-info-row {
+  gap: 0.8rem;
+  margin-top: 1.7rem !important;
+}
+
+.status-idle .info-pill {
+  padding: 0.6rem 0.9rem;
+  font-size: 0.9rem;
+}
+
+.status-idle .rank-gallery {
+  gap: 0.85rem;
+  max-width: 760px;
+  margin-top: 1.2rem;
+  border-radius: 22px;
+  padding: 1rem;
+}
+
+.status-idle .rank-gallery-header h3 {
+  margin-top: 0.25rem;
+  font-size: 1.25rem;
+}
+
+.status-idle .rank-gallery-header > span {
+  font-size: 0.78rem;
+  padding: 0.4rem 0.68rem;
+}
+
+.status-idle .rank-gallery-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.status-idle .rank-gallery-item {
+  min-height: 64px;
+  gap: 0.8rem;
+  border-radius: 16px;
+  padding: 0.65rem 0.75rem;
+}
+
+.status-idle .rank-gallery-item strong {
+  font-size: 1rem;
+}
+
+.status-idle .rank-gallery-item em,
+.status-idle .rank-gallery-item > span {
+  font-size: 0.72rem;
+}
+
+.status-idle .start-panel {
+  border-radius: 24px;
+  padding: 28px;
+}
+
+.status-idle .start-panel > div:first-child > p {
+  font-size: 0.875rem;
+}
+
+.status-idle .start-panel .mt-4 {
+  gap: 0.75rem;
+  margin-top: 1rem !important;
+}
+
+.status-idle .difficulty-button {
+  gap: 0.45rem;
+  border-radius: 16px;
+  padding: 1rem;
+}
+
+.status-idle .difficulty-button strong {
+  font-size: 1.05rem;
+}
+
+.status-idle .difficulty-button small {
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.status-idle .difficulty-button em {
+  font-size: 0.94rem;
+  line-height: 1.65;
+  white-space: nowrap;
+}
+
+.status-idle .title-action-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1.75rem !important;
+  padding-top: 1.5rem !important;
+}
+
+.status-idle .title-action-grid > div span {
+  font-size: 0.75rem;
+}
+
+.status-idle .title-action-grid > div p {
+  margin-top: 0.25rem;
+  font-size: 1.875rem;
+}
+
+.status-idle .title-action-grid .start-button,
+.status-idle .title-action-grid .ghost-button,
+.status-idle .title-action-grid .x-share-button {
+  min-height: 58px;
+  border-radius: 14px;
+  padding: 1rem 1.35rem;
+  font-size: 1rem;
+}
+
+.status-idle .x-logo {
+  width: 1.65rem;
+  border-radius: 8px;
+  font-size: 1rem;
 }
