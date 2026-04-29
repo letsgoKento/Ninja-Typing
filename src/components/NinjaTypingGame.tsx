@@ -550,6 +550,7 @@ function KeyboardShortcutsPanel() {
     { key: "L", label: "ランキング" },
     { key: "P", label: "スコア" },
     { key: "H", label: "遊び方" },
+    { key: "K", label: "操作" },
     { key: "A", label: "ログイン" },
     { key: "M", label: "効果音" },
     { key: "Esc / T", label: "タイトル" },
@@ -567,6 +568,19 @@ function KeyboardShortcutsPanel() {
           </p>
         ))}
       </div>
+    </div>
+  );
+}
+
+function ControlsPanel() {
+  return (
+    <div className="controls-panel">
+      <div>
+        <p className="panel-kicker">Keyboard</p>
+        <h2>操作</h2>
+        <p className="controls-lead">マウスなしでも、ゲーム開始からリトライ、ランキング確認まで操作できます。</p>
+      </div>
+      <KeyboardShortcutsPanel />
     </div>
   );
 }
@@ -1498,6 +1512,17 @@ export function NinjaTypingGame() {
     setEnemyHit(false);
   }, [audio]);
 
+  const openControls = useCallback(() => {
+    audio.stopAmbient();
+    statusRef.current = "controls";
+    setStatus("controls");
+    setInput("");
+    setRomajiOffset(0);
+    setIsResolving(false);
+    setWrongIndex(null);
+    setEnemyHit(false);
+  }, [audio]);
+
   const openSettings = useCallback(() => {
     audio.stopAmbient();
     statusRef.current = "settings";
@@ -1616,7 +1641,8 @@ export function NinjaTypingGame() {
           status === "auth" ||
           status === "help" ||
           status === "settings" ||
-          status === "score"
+          status === "score" ||
+          status === "controls"
         ) {
           event.preventDefault();
           returnToTitle();
@@ -1700,6 +1726,11 @@ export function NinjaTypingGame() {
           openHelp();
         }
 
+        if (key === "k") {
+          event.preventDefault();
+          openControls();
+        }
+
         if (key === "s") {
           event.preventDefault();
           openSettings();
@@ -1740,6 +1771,12 @@ export function NinjaTypingGame() {
         if (key === "h") {
           event.preventDefault();
           openHelp();
+          return;
+        }
+
+        if (key === "k") {
+          event.preventDefault();
+          openControls();
           return;
         }
 
@@ -1800,6 +1837,12 @@ export function NinjaTypingGame() {
         if (key === "h") {
           event.preventDefault();
           openHelp();
+          return;
+        }
+
+        if (key === "k") {
+          event.preventDefault();
+          openControls();
           return;
         }
 
@@ -1913,6 +1956,7 @@ export function NinjaTypingGame() {
       openLeaderboard,
       openAuth,
       openHelp,
+      openControls,
       openScoreGuide,
       openSettings,
       openShareOnce,
@@ -1992,6 +2036,11 @@ export function NinjaTypingGame() {
               </button>
             ) : null}
             {status !== "playing" ? (
+              <button className="icon-button wide-icon-button" type="button" onClick={openControls} aria-label="キーボード操作を見る">
+                操作
+              </button>
+            ) : null}
+            {status !== "playing" ? (
               <button className="icon-button account-header-button" type="button" onClick={openAuth} aria-label="会員登録またはログイン画面を開く">
                 {session ? username || getFallbackUsername(session) : "会員登録 / ログイン"}
               </button>
@@ -2027,7 +2076,6 @@ export function NinjaTypingGame() {
                     設定
                   </button>
                 </div>
-                <KeyboardShortcutsPanel />
                 <h2 className="hero-title">
                   <span className="hero-word-primary">{COPY.heroLine1}</span>
                   <span className="hero-divider">/</span>
@@ -2084,6 +2132,9 @@ export function NinjaTypingGame() {
                   </button>
                   <button className="ghost-button compact-button" type="button" onClick={openHelp} aria-label="遊び方を見る">
                     遊び方
+                  </button>
+                  <button className="ghost-button compact-button" type="button" onClick={openControls} aria-label="キーボード操作を見る">
+                    操作
                   </button>
                   <button className="x-share-button compact-button" type="button" onClick={() => openShareOnce(createGameShareUrl())} aria-label="Ninja TypingをXで共有する">
                     <span className="x-logo" aria-hidden="true">X</span>
@@ -2399,6 +2450,30 @@ export function NinjaTypingGame() {
               transition={{ duration: 0.28 }}
             >
               <ScoreGuidePanel />
+              <div className="result-actions">
+                <button className="start-button" type="button" onClick={startGame} aria-label="ゲームを開始する">
+                  Start
+                </button>
+                <button className="ghost-button" type="button" onClick={openHelp} aria-label="遊び方を見る">
+                  遊び方
+                </button>
+                <button className="ghost-button" type="button" onClick={returnToTitle} aria-label="タイトル画面へ戻る">
+                  タイトル
+                </button>
+              </div>
+            </motion.section>
+          ) : null}
+
+          {status === "controls" ? (
+            <motion.section
+              key="controls"
+              className="controls-layout"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -16 }}
+              transition={{ duration: 0.28 }}
+            >
+              <ControlsPanel />
               <div className="result-actions">
                 <button className="start-button" type="button" onClick={startGame} aria-label="ゲームを開始する">
                   Start

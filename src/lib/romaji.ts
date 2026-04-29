@@ -68,7 +68,7 @@ const KANA_ROMAJI: Record<string, string[]> = {
   "\u308c": ["re"],
   "\u308d": ["ro"],
   "\u308f": ["wa"],
-  "\u3092": ["wo", "o"],
+  "\u3092": ["wo"],
   "\u3093": ["n", "nn", "n'"],
   "\u3041": ["xa", "la"],
   "\u3043": ["xi", "li", "xyi", "lyi"],
