@@ -3777,7 +3777,7 @@ button {
   flex: 0 0 auto;
   width: 1720px;
   height: 900px;
-  transform: scale(var(--title-scale));
+  transform: scale(var(--app-scale));
   transform-origin: top center;
 }
 
@@ -3996,4 +3996,169 @@ button {
   width: 1.65rem;
   border-radius: 8px;
   font-size: 1rem;
+}
+
+.app-root {
+  min-height: 100dvh;
+}
+
+.app-root .app-fit-viewport {
+  display: flex;
+  width: 100vw;
+  height: 100dvh;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.app-root .app-fit-stage {
+  flex: 0 0 auto;
+  width: 1720px;
+  height: var(--app-design-height);
+  transform: scale(var(--app-scale));
+  transform-origin: top center;
+}
+
+.app-root .app-shell {
+  grid-template-columns: minmax(92px, 150px) minmax(0, 1280px) minmax(92px, 150px);
+  gap: 22px;
+  width: 1720px;
+  min-height: var(--app-design-height);
+  height: auto;
+  overflow: visible;
+  padding: 16px 24px 18px;
+}
+
+.app-root .app-content {
+  height: auto;
+  min-height: calc(var(--app-design-height) - 34px);
+}
+
+.app-root .ad-rail {
+  display: grid;
+  min-height: calc(var(--app-design-height) - 40px);
+}
+
+.app-root .app-header {
+  display: grid;
+  grid-template-columns: minmax(400px, max-content) minmax(0, 1fr);
+  align-items: start;
+  gap: 1rem;
+}
+
+.app-root .brand-title {
+  white-space: nowrap;
+}
+
+.app-root .header-actions {
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+}
+
+.app-root .title-layout {
+  grid-template-columns: minmax(0, 1.45fr) minmax(360px, 0.65fr);
+}
+
+.app-root .hero-title {
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.app-root .rank-gallery-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.app-root .title-action-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.app-root .start-button,
+.app-root .ghost-button,
+.app-root .x-share-button {
+  width: auto;
+}
+
+.app-root .title-action-grid .start-button,
+.app-root .title-action-grid .ghost-button,
+.app-root .title-action-grid .x-share-button {
+  width: 100%;
+}
+
+.app-root .hud-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.app-root .result-grid {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.app-root .stage {
+  grid-template-columns: minmax(160px, 0.72fr) minmax(220px, 1fr) minmax(160px, 0.72fr);
+  min-height: 0;
+}
+
+.app-root .prompt-row {
+  grid-template-columns: minmax(0, 1fr);
+  min-height: clamp(112px, 15dvh, 164px);
+  padding-inline: clamp(8px, 2vw, 36px);
+}
+
+.app-root .next-prompt-preview {
+  position: absolute;
+  top: -0.35rem;
+  right: 0.4rem;
+  width: min(17vw, 176px);
+  max-width: 176px;
+  justify-self: auto;
+  justify-items: stretch;
+  border-radius: 16px;
+  text-align: left;
+  transform: none;
+}
+
+.app-root .next-prompt-preview em {
+  grid-column: auto;
+}
+
+.app-root .input-readout {
+  align-items: center;
+  flex-direction: row;
+}
+
+.app-root .result-score-row {
+  grid-template-columns: minmax(150px, 1fr) minmax(260px, auto) minmax(190px, 1fr);
+}
+
+.app-root .retry-key-hint {
+  justify-self: start;
+}
+
+.app-root .x-share-button-result {
+  justify-self: end;
+}
+
+.app-root .post-result-grid {
+  grid-template-columns: minmax(280px, 0.8fr) minmax(420px, 1.2fr);
+}
+
+.app-root .help-grid,
+.app-root .score-guide-grid,
+.app-root .settings-featured {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.app-root .settings-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  justify-items: stretch;
+}
+
+.app-root .leaderboard-header {
+  align-items: start;
+  flex-direction: row;
+}
+
+@media (max-width: 520px) {
+  .app-root .app-fit-viewport {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
 }

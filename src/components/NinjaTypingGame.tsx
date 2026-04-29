@@ -90,12 +90,25 @@ const PLAYER_SETTINGS_KEY = "ninja-typing-player-settings";
 const SOUND_SETTINGS_KEY = "ninja-typing-sound-enabled";
 const GAME_VERSION = "v1.0.0";
 const RESULT_SHORTCUT_GRACE_MS = 850;
-const TITLE_DESIGN_WIDTH = 1720;
-const TITLE_DESIGN_HEIGHT = 900;
+const APP_DESIGN_WIDTH = 1720;
+const APP_DESIGN_HEIGHTS: Record<GameStatus, number> = {
+  idle: 900,
+  playing: 900,
+  finished: 1080,
+  leaderboard: 980,
+  auth: 980,
+  help: 980,
+  score: 980,
+  controls: 980,
+  settings: 980
+};
+const MAX_SHURIKEN_COUNT = 8;
+const MAX_ACTIVE_EFFECTS = 32;
 const disabledProgress: ReadingProgress = { completed: 0, activeStart: -1, activeEnd: -1 };
 
 type AppRootStyle = CSSProperties & {
-  "--title-scale": number;
+  "--app-scale": number;
+  "--app-design-height": string;
 };
 
 const defaultPlayerSettings: PlayerSettings = {
@@ -345,11 +358,15 @@ function getAttackIntensity(combo: number) {
 }
 
 function getShurikenCount(combo: number) {
-  return Math.max(1, Math.floor(Math.max(0, combo) / 3) + 1);
+  return Math.min(MAX_SHURIKEN_COUNT, Math.max(1, Math.floor(Math.max(0, combo) / 3) + 1));
 }
 
 function getHitBurstCount(combo: number) {
-  return 1 + Math.min(getComboEffectStep(combo), 12);
+  return 1 + Math.min(getComboEffectStep(combo), 6);
+}
+
+function getTypingExtraSlashCount(combo: number) {
+  return Math.min(Math.floor(getComboEffectStep(combo) / 3), 2);
 }
 
 function normalizePlayerSettings(value: unknown): PlayerSettings {
@@ -1248,7 +1265,7 @@ export function NinjaTypingGame() {
   const [session, setSession] = useState<Session | null>(null);
   const [username, setUsername] = useState("");
   const [unlockedRankIds, setUnlockedRankIds] = useState<string[]>([]);
-  const [titleScale, setTitleScale] = useState(1);
+  const [appScale, setAppScale] = useState(1);
   const endAtRef = useRef(0);
   const metricsRef = useRef(metrics);
   const statusRef = useRef(status);
@@ -1277,7 +1294,14 @@ export function NinjaTypingGame() {
   const attackIntensity = playerSettings.comboEffects ? getAttackIntensity(attackCombo) : 0;
   const visibleReadingProgress = playerSettings.kanaProgress ? readingProgress : disabledProgress;
   const visibleTextProgress = playerSettings.textProgress ? textProgress : disabledProgress;
-  const appRootStyle = useMemo<AppRootStyle>(() => ({ "--title-scale": titleScale }), [titleScale]);
+  const appDesignHeight = APP_DESIGN_HEIGHTS[status];
+  const appRootStyle = useMemo<AppRootStyle>(
+    () => ({
+      "--app-scale": appScale,
+      "--app-design-height": `${appDesignHeight}px`
+    }),
+    [appDesignHeight, appScale]
+  );
 
   useEffect(() => {
     metricsRef.current = metrics;
@@ -1292,18 +1316,29 @@ export function NinjaTypingGame() {
       return;
     }
 
-    const updateTitleScale = () => {
+    const updateAppScale = () => {
       const horizontalRoom = Math.max(1, window.innerWidth - 6);
       const verticalRoom = Math.max(1, window.innerHeight - 6);
-      const fitScale = Math.min(horizontalRoom / TITLE_DESIGN_WIDTH, verticalRoom / TITLE_DESIGN_HEIGHT);
-      setTitleScale(Number(Math.min(1.04, fitScale).toFixed(4)));
+      const fitScale = Math.min(horizontalRoom / APP_DESIGN_WIDTH, verticalRoom / APP_DESIGN_HEIGHTS[statusRef.current]);
+      setAppScale(Number(Math.min(1.04, fitScale).toFixed(4)));
     };
 
-    updateTitleScale();
-    window.addEventListener("resize", updateTitleScale);
+    updateAppScale();
+    window.addEventListener("resize", updateAppScale);
 
-    return () => window.removeEventListener("resize", updateTitleScale);
+    return () => window.removeEventListener("resize", updateAppScale);
   }, []);
+
+  useLayoutEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const horizontalRoom = Math.max(1, window.innerWidth - 6);
+    const verticalRoom = Math.max(1, window.innerHeight - 6);
+    const fitScale = Math.min(horizontalRoom / APP_DESIGN_WIDTH, verticalRoom / appDesignHeight);
+    setAppScale(Number(Math.min(1.04, fitScale).toFixed(4)));
+  }, [appDesignHeight]);
 
   useEffect(() => {
     if (status !== "idle" || typeof window === "undefined") {
@@ -1488,7 +1523,7 @@ export function NinjaTypingGame() {
       rotate: -36 + Math.random() * 72
     };
 
-    setEffects((previous) => [...previous, effect]);
+    setEffects((previous) => [...previous.slice(-(MAX_ACTIVE_EFFECTS - 1)), effect]);
     window.setTimeout(() => {
       setEffects((previous) => previous.filter((item) => item.id !== id));
     }, type === "hit" ? 760 : 360);
@@ -1820,8 +1855,8 @@ export function NinjaTypingGame() {
           });
         }
 
-        const finishSlashCount = playerSettings.comboEffects ? Math.min(getComboEffectStep(comboValue), 8) : 0;
-        const totalSlashCount = finishSlashCount + (milestoneCombo ? 4 : 0);
+        const finishSlashCount = playerSettings.comboEffects ? Math.min(getComboEffectStep(comboValue), 5) : 0;
+        const totalSlashCount = finishSlashCount + (milestoneCombo ? 3 : 0);
 
         for (let index = 0; index < totalSlashCount; index += 1) {
           const angle = (Math.PI * 2 * index) / Math.max(1, totalSlashCount);
@@ -2111,7 +2146,7 @@ export function NinjaTypingGame() {
         setWrongIndex(null);
         addEffect("slash", getEnemySlashPosition(enemyConfig, enemyConfig.boss ? 13 : 9));
 
-        const slashLevel = playerSettings.comboEffects ? Math.min(getComboEffectStep(metricsRef.current.combo), 6) : 0;
+        const slashLevel = playerSettings.comboEffects ? getTypingExtraSlashCount(metricsRef.current.combo) : 0;
 
         for (let index = 0; index < slashLevel; index += 1) {
           if ((input.length + index) % 2 === 0) {
