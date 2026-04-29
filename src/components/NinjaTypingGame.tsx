@@ -541,6 +541,36 @@ function RankGallery({ unlockedRankIds }: { unlockedRankIds: string[] }) {
   );
 }
 
+function KeyboardShortcutsPanel() {
+  const shortcuts = [
+    { key: "Enter / Space", label: "開始" },
+    { key: "← →", label: "難易度" },
+    { key: "1 2 3", label: "Easy / Normal / Hard" },
+    { key: "S", label: "設定" },
+    { key: "L", label: "ランキング" },
+    { key: "P", label: "スコア" },
+    { key: "H", label: "遊び方" },
+    { key: "A", label: "ログイン" },
+    { key: "M", label: "効果音" },
+    { key: "Esc / T", label: "タイトル" },
+    { key: "R", label: "リトライ" }
+  ];
+
+  return (
+    <div className="shortcut-panel" aria-label="キーボードショートカット">
+      <span>KEYBOARD</span>
+      <div>
+        {shortcuts.map((shortcut) => (
+          <p key={`${shortcut.key}-${shortcut.label}`}>
+            <kbd>{shortcut.key}</kbd>
+            <em>{shortcut.label}</em>
+          </p>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function AccountScreen({
   session,
   username,
@@ -577,7 +607,7 @@ function HowToPlayPanel() {
     <div className="help-panel">
       <div>
         <p className="panel-kicker">Guide</p>
-        <h2>遊び方とスコア</h2>
+        <h2>遊び方</h2>
       </div>
 
       <div className="help-grid">
@@ -593,8 +623,8 @@ function HowToPlayPanel() {
         </section>
         <section>
           <span>03</span>
-          <h3>スコアは長さ・難易度・コンボで上昇</h3>
-          <p>長いお題ほど基本点が高く、Normal・Hardでは難易度倍率がかかります。</p>
+          <h3>コンボで演出と倍率が上がる</h3>
+          <p>連続で正解するとコンボが伸び、手裏剣や爆発の演出が強くなります。</p>
         </section>
         <section>
           <span>04</span>
@@ -602,11 +632,49 @@ function HowToPlayPanel() {
           <p>会員登録すると最高記録を保存できます。記録更新時は自動で上書きされます。</p>
         </section>
       </div>
+    </div>
+  );
+}
 
-      <div className="help-score-strip">
-        <span>Base: 85 + 読みの長さ x 16</span>
-        <span>Combo: 1連ごとに +10%</span>
-        <span>Difficulty: Easy x1 / Normal x1.25 / Hard x1.55</span>
+function ScoreGuidePanel() {
+  return (
+    <div className="score-guide-panel">
+      <div>
+        <p className="panel-kicker">Score System</p>
+        <h2>スコア計算</h2>
+        <p className="score-guide-lead">1つのお題を打ち切るたびに、読みの長さ・難易度・コンボ倍率をもとに加点されます。</p>
+      </div>
+
+      <div className="score-formula-card">
+        <span>FORMULA</span>
+        <strong>round((85 + 読み文字数 x 16) x 難易度倍率 x コンボ倍率)</strong>
+      </div>
+
+      <div className="score-guide-grid">
+        <section>
+          <span>01</span>
+          <h3>基本点</h3>
+          <p>読みの空白を除いた文字数が長いほど高くなります。短い単語より、長い文章の方が大きく伸びます。</p>
+          <em>85 + 読み文字数 x 16</em>
+        </section>
+        <section>
+          <span>02</span>
+          <h3>難易度倍率</h3>
+          <p>難しいモードほど同じお題でも高得点になります。ランキングは難易度ごとに分かれています。</p>
+          <em>Easy x{DIFFICULTIES.easy.multiplier} / Normal x{DIFFICULTIES.normal.multiplier} / Hard x{DIFFICULTIES.hard.multiplier}</em>
+        </section>
+        <section>
+          <span>03</span>
+          <h3>コンボ倍率</h3>
+          <p>1コンボごとに+10%。最大で+400%まで伸びます。ミスするとコンボは0に戻ります。</p>
+          <em>1 + min(コンボ x 0.1, 4)</em>
+        </section>
+        <section>
+          <span>04</span>
+          <h3>ランキングの並び順</h3>
+          <p>スコアが高い順に表示され、同点の場合は正確率、最大コンボの順で上位になります。</p>
+          <em>Score → Accuracy → Max Combo</em>
+        </section>
       </div>
     </div>
   );
@@ -1419,6 +1487,17 @@ export function NinjaTypingGame() {
     setEnemyHit(false);
   }, [audio]);
 
+  const openScoreGuide = useCallback(() => {
+    audio.stopAmbient();
+    statusRef.current = "score";
+    setStatus("score");
+    setInput("");
+    setRomajiOffset(0);
+    setIsResolving(false);
+    setWrongIndex(null);
+    setEnemyHit(false);
+  }, [audio]);
+
   const openSettings = useCallback(() => {
     audio.stopAmbient();
     statusRef.current = "settings";
@@ -1530,7 +1609,15 @@ export function NinjaTypingGame() {
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        if (status === "playing" || status === "finished" || status === "leaderboard" || status === "auth" || status === "help" || status === "settings") {
+        if (
+          status === "playing" ||
+          status === "finished" ||
+          status === "leaderboard" ||
+          status === "auth" ||
+          status === "help" ||
+          status === "settings" ||
+          status === "score"
+        ) {
           event.preventDefault();
           returnToTitle();
         }
@@ -1550,6 +1637,23 @@ export function NinjaTypingGame() {
         Boolean(target?.isContentEditable);
 
       if (isEditableTarget) {
+        return;
+      }
+
+      const isNativeInteractiveTarget =
+        target instanceof HTMLButtonElement ||
+        target instanceof HTMLAnchorElement ||
+        (target instanceof HTMLElement && Boolean(target.closest("button, a")));
+
+      if (isNativeInteractiveTarget && (event.key === "Enter" || event.key === " ")) {
+        return;
+      }
+
+      const key = event.key.toLowerCase();
+
+      if (status !== "playing" && key === "m") {
+        event.preventDefault();
+        toggleSoundEnabled();
         return;
       }
 
@@ -1581,33 +1685,134 @@ export function NinjaTypingGame() {
           }
         }
 
-        if (event.key.toLowerCase() === "l") {
+        if (key === "l") {
           event.preventDefault();
           openLeaderboard();
         }
 
-        if (event.key.toLowerCase() === "a") {
+        if (key === "a") {
           event.preventDefault();
           openAuth();
         }
 
-        if (event.key.toLowerCase() === "h") {
+        if (key === "h") {
           event.preventDefault();
           openHelp();
         }
 
-        if (event.key.toLowerCase() === "s") {
+        if (key === "s") {
           event.preventDefault();
           openSettings();
+        }
+
+        if (key === "p") {
+          event.preventDefault();
+          openScoreGuide();
+        }
+
+        if (key === "x") {
+          event.preventDefault();
+          openShareOnce(createGameShareUrl());
         }
 
         return;
       }
 
       if (status === "finished") {
-        if (event.key === "Enter" || event.key === " " || event.key.toLowerCase() === "r") {
+        if (event.key === "Enter" || event.key === " " || key === "r") {
           event.preventDefault();
           startGame();
+          return;
+        }
+
+        if (key === "t") {
+          event.preventDefault();
+          returnToTitle();
+          return;
+        }
+
+        if (key === "l") {
+          event.preventDefault();
+          openLeaderboard(difficulty);
+          return;
+        }
+
+        if (key === "h") {
+          event.preventDefault();
+          openHelp();
+          return;
+        }
+
+        if (key === "p") {
+          event.preventDefault();
+          openScoreGuide();
+          return;
+        }
+
+        if (key === "s") {
+          event.preventDefault();
+          openSettings();
+          return;
+        }
+
+        if (key === "x") {
+          event.preventDefault();
+          openShareOnce(
+            createScoreShareUrl({
+              score: metrics.score,
+              accuracy,
+              maxCombo: metrics.maxCombo,
+              difficulty: DIFFICULTIES[difficulty].label,
+              rank: rank.title
+            })
+          );
+          return;
+        }
+
+        return;
+      }
+
+      if (status !== "playing") {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          startGame();
+          return;
+        }
+
+        if (key === "t") {
+          event.preventDefault();
+          returnToTitle();
+          return;
+        }
+
+        if (key === "l") {
+          event.preventDefault();
+          openLeaderboard();
+          return;
+        }
+
+        if (key === "a") {
+          event.preventDefault();
+          openAuth();
+          return;
+        }
+
+        if (key === "h") {
+          event.preventDefault();
+          openHelp();
+          return;
+        }
+
+        if (key === "s") {
+          event.preventDefault();
+          openSettings();
+          return;
+        }
+
+        if (key === "p") {
+          event.preventDefault();
+          openScoreGuide();
+          return;
         }
 
         return;
@@ -1697,19 +1902,26 @@ export function NinjaTypingGame() {
       audio,
       completeWord,
       currentPrompt,
+      accuracy,
       difficulty,
       input,
       isResolving,
+      metrics.maxCombo,
+      metrics.score,
       returnToTitle,
       romajiCandidates,
       openLeaderboard,
       openAuth,
       openHelp,
+      openScoreGuide,
       openSettings,
+      openShareOnce,
       playerSettings.comboEffects,
+      rank.title,
       selectDifficultyByOffset,
       startGame,
-      status
+      status,
+      toggleSoundEnabled
     ]
   );
 
@@ -1770,6 +1982,11 @@ export function NinjaTypingGame() {
               </button>
             ) : null}
             {status !== "playing" ? (
+              <button className="icon-button wide-icon-button" type="button" onClick={openScoreGuide} aria-label="スコア計算を見る">
+                スコア
+              </button>
+            ) : null}
+            {status !== "playing" ? (
               <button className="icon-button wide-icon-button" type="button" onClick={openHelp} aria-label="遊び方を見る">
                 遊び方
               </button>
@@ -1810,6 +2027,7 @@ export function NinjaTypingGame() {
                     設定
                   </button>
                 </div>
+                <KeyboardShortcutsPanel />
                 <h2 className="hero-title">
                   <span className="hero-word-primary">{COPY.heroLine1}</span>
                   <span className="hero-divider">/</span>
@@ -1860,6 +2078,9 @@ export function NinjaTypingGame() {
                   </button>
                   <button className="ghost-button compact-button" type="button" onClick={() => openLeaderboard(difficulty)} aria-label="選択中の難易度のランキングを見る">
                     ランキング
+                  </button>
+                  <button className="ghost-button compact-button" type="button" onClick={openScoreGuide} aria-label="スコア計算を見る">
+                    スコア
                   </button>
                   <button className="ghost-button compact-button" type="button" onClick={openHelp} aria-label="遊び方を見る">
                     遊び方
@@ -2160,6 +2381,30 @@ export function NinjaTypingGame() {
               <div className="result-actions">
                 <button className="start-button" type="button" onClick={startGame} aria-label="ゲームを開始する">
                   Start
+                </button>
+                <button className="ghost-button" type="button" onClick={returnToTitle} aria-label="タイトル画面へ戻る">
+                  タイトル
+                </button>
+              </div>
+            </motion.section>
+          ) : null}
+
+          {status === "score" ? (
+            <motion.section
+              key="score"
+              className="score-layout"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -16 }}
+              transition={{ duration: 0.28 }}
+            >
+              <ScoreGuidePanel />
+              <div className="result-actions">
+                <button className="start-button" type="button" onClick={startGame} aria-label="ゲームを開始する">
+                  Start
+                </button>
+                <button className="ghost-button" type="button" onClick={openHelp} aria-label="遊び方を見る">
+                  遊び方
                 </button>
                 <button className="ghost-button" type="button" onClick={returnToTitle} aria-label="タイトル画面へ戻る">
                   タイトル

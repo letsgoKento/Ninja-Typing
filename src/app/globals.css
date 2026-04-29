@@ -163,12 +163,30 @@ button {
   overflow: hidden;
 }
 
+.status-idle .app-shell,
+.status-finished .app-shell {
+  height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
+}
+
 .status-playing .app-content {
   height: 100%;
   min-height: 0;
 }
 
+.status-idle .app-content,
+.status-finished .app-content {
+  height: 100%;
+  min-height: 0;
+}
+
 .status-playing header {
+  flex: 0 0 auto;
+}
+
+.status-idle header,
+.status-finished header {
   flex: 0 0 auto;
 }
 
@@ -217,6 +235,14 @@ button {
   padding: clamp(42px, 7vh, 92px) 0 28px;
 }
 
+.status-idle .title-layout {
+  min-height: 0;
+  align-content: center;
+  gap: clamp(16px, 3vw, 48px);
+  overflow: hidden;
+  padding: clamp(10px, 2.2vh, 36px) 0 clamp(8px, 1.5vh, 20px);
+}
+
 .title-copy {
   min-width: 0;
 }
@@ -248,6 +274,59 @@ button {
   transform: translateY(-2px);
 }
 
+.shortcut-panel {
+  display: grid;
+  gap: 0.5rem;
+  max-width: 780px;
+  margin-top: 1rem;
+  border: 1px solid rgba(103, 232, 249, 0.16);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(34, 211, 238, 0.1), rgba(15, 23, 42, 0.42)),
+    rgba(2, 6, 23, 0.28);
+  padding: 0.78rem 0.9rem;
+}
+
+.shortcut-panel > span {
+  color: #67e8f9;
+  font-size: 0.68rem;
+  font-weight: 950;
+  letter-spacing: 0.22em;
+}
+
+.shortcut-panel div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.42rem 0.62rem;
+}
+
+.shortcut-panel p {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  margin: 0;
+  color: #cbd5e1;
+  font-size: 0.78rem;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.shortcut-panel kbd {
+  border: 1px solid rgba(251, 191, 36, 0.32);
+  border-radius: 8px;
+  background: rgba(2, 6, 23, 0.7);
+  box-shadow: inset 0 -2px 0 rgba(251, 191, 36, 0.16);
+  color: #fde68a;
+  font-size: 0.72rem;
+  font-weight: 950;
+  padding: 0.2rem 0.38rem;
+}
+
+.shortcut-panel em {
+  color: #dbeafe;
+  font-style: normal;
+}
+
 .hero-title {
   display: flex;
   align-items: baseline;
@@ -260,6 +339,11 @@ button {
   letter-spacing: 0;
   line-height: 0.9;
   text-shadow: 0 0 34px rgba(34, 211, 238, 0.18), 0 20px 46px rgba(0, 0, 0, 0.45);
+}
+
+.status-idle .hero-title {
+  margin-top: clamp(0.7rem, 2vh, 1.45rem);
+  font-size: clamp(2.7rem, 8.2vmin, 6.4rem);
 }
 
 .hero-word-primary,
@@ -305,6 +389,10 @@ button {
   padding: clamp(22px, 3vw, 32px);
 }
 
+.status-idle .start-panel {
+  padding: clamp(16px, 2.2vmin, 28px);
+}
+
 .info-pill {
   border: 1px solid rgba(148, 163, 184, 0.18);
   border-radius: 999px;
@@ -324,6 +412,17 @@ button {
     linear-gradient(180deg, rgba(251, 191, 36, 0.08), transparent);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 20px 54px rgba(0, 0, 0, 0.22);
   padding: 1rem;
+}
+
+.status-idle .rank-gallery {
+  gap: clamp(0.45rem, 1vh, 0.85rem);
+  margin-top: clamp(0.65rem, 1.6vh, 1.2rem);
+  padding: clamp(0.65rem, 1.4vh, 1rem);
+}
+
+.status-idle .rank-gallery-item {
+  min-height: clamp(44px, 6.4vh, 64px);
+  padding: clamp(0.42rem, 1vh, 0.65rem) clamp(0.5rem, 1vw, 0.75rem);
 }
 
 .rank-gallery-header {
@@ -1488,11 +1587,23 @@ button {
   padding: clamp(42px, 7vh, 82px) 0 28px;
 }
 
+.status-finished .result-layout {
+  min-height: 0;
+  align-content: start;
+  gap: clamp(8px, 1.4vh, 16px);
+  overflow: hidden;
+  padding: clamp(8px, 1.8vh, 24px) 0 clamp(8px, 1.4vh, 16px);
+}
+
 .rank-panel {
   overflow: hidden;
   border-radius: 28px;
   padding: clamp(26px, 4vw, 44px);
   text-align: center;
+}
+
+.status-finished .rank-panel {
+  padding: clamp(14px, 2.2vh, 28px);
 }
 
 .result-score-row {
@@ -1576,6 +1687,16 @@ button {
   padding: 1.25rem;
 }
 
+.status-finished .rank-letter {
+  min-height: clamp(96px, 15vh, 156px);
+  margin-top: clamp(0.45rem, 1.2vh, 1rem);
+  padding: clamp(0.7rem, 1.6vh, 1.1rem);
+}
+
+.status-finished .rank-letter strong {
+  font-size: clamp(2rem, 7vmin, 4.4rem);
+}
+
 .rank-letter strong {
   color: #fde68a;
   font-size: clamp(2.5rem, 7vw, 5.2rem);
@@ -1618,6 +1739,23 @@ button {
   align-items: start;
 }
 
+.status-finished .post-result-grid {
+  min-height: 0;
+  gap: clamp(10px, 1.4vh, 18px);
+}
+
+.status-finished .score-submit-panel,
+.status-finished .leaderboard-panel {
+  max-height: clamp(230px, 34vh, 380px);
+  overflow: hidden;
+  padding: clamp(14px, 2vh, 24px);
+}
+
+.status-finished .leaderboard-list {
+  max-height: clamp(120px, 19vh, 220px);
+  overflow: hidden;
+}
+
 .leaderboard-layout {
   display: grid;
   flex: 1;
@@ -1628,7 +1766,8 @@ button {
 
 .auth-layout,
 .help-layout,
-.settings-layout {
+.settings-layout,
+.score-layout {
   display: grid;
   flex: 1;
   align-content: center;
@@ -1643,6 +1782,7 @@ button {
 .account-status-panel,
 .help-panel,
 .settings-panel,
+.score-guide-panel,
 .auth-callback-card {
   border: 1px solid rgba(148, 163, 184, 0.2);
   border-radius: 24px;
@@ -1657,6 +1797,100 @@ button {
   display: grid;
   gap: clamp(18px, 3vw, 28px);
   padding: clamp(22px, 3.2vw, 36px);
+}
+
+.score-guide-panel {
+  display: grid;
+  gap: clamp(18px, 3vw, 28px);
+  padding: clamp(22px, 3.2vw, 36px);
+}
+
+.score-guide-panel h2 {
+  color: #f8fafc;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-weight: 950;
+  line-height: 1;
+}
+
+.score-guide-lead {
+  max-width: 760px;
+  margin-top: 0.72rem;
+  color: #cbd5e1;
+  line-height: 1.8;
+}
+
+.score-formula-card {
+  display: grid;
+  gap: 0.5rem;
+  border: 1px solid rgba(251, 191, 36, 0.28);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(251, 191, 36, 0.14), rgba(34, 211, 238, 0.08)),
+    rgba(2, 6, 23, 0.36);
+  padding: 1rem 1.1rem;
+}
+
+.score-formula-card span {
+  color: #fde68a;
+  font-size: 0.72rem;
+  font-weight: 950;
+  letter-spacing: 0.22em;
+}
+
+.score-formula-card strong {
+  color: #f8fafc;
+  font-size: clamp(1rem, 2vw, 1.35rem);
+  font-weight: 950;
+  line-height: 1.5;
+}
+
+.score-guide-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.score-guide-grid section {
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(34, 211, 238, 0.08), rgba(15, 23, 42, 0.48)),
+    rgba(2, 6, 23, 0.28);
+  padding: 1rem;
+}
+
+.score-guide-grid span {
+  color: #67e8f9;
+  font-size: 0.74rem;
+  font-weight: 950;
+  letter-spacing: 0.18em;
+}
+
+.score-guide-grid h3 {
+  margin-top: 0.42rem;
+  color: #f8fafc;
+  font-size: 1.1rem;
+  font-weight: 950;
+}
+
+.score-guide-grid p {
+  margin-top: 0.45rem;
+  color: #cbd5e1;
+  font-size: 0.9rem;
+  line-height: 1.75;
+}
+
+.score-guide-grid em {
+  display: inline-flex;
+  margin-top: 0.72rem;
+  border: 1px solid rgba(103, 232, 249, 0.2);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.55);
+  color: #bae6fd;
+  font-size: 0.78rem;
+  font-style: normal;
+  font-weight: 900;
+  padding: 0.34rem 0.62rem;
 }
 
 .settings-header {
@@ -2463,7 +2697,8 @@ button {
   }
 
   .seo-card-grid,
-  .seo-faq-list {
+  .seo-faq-list,
+  .score-guide-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -2605,6 +2840,64 @@ button {
     padding: 0.62rem 0.78rem;
   }
 
+  .status-idle header h1,
+  .status-finished header h1 {
+    margin-top: 0.22rem;
+    font-size: clamp(1.25rem, 2vw, 1.7rem);
+  }
+
+  .status-idle header p,
+  .status-finished header p {
+    font-size: 0.66rem;
+    letter-spacing: 0.28em;
+  }
+
+  .status-idle .icon-button,
+  .status-finished .icon-button {
+    padding: 0.58rem 0.74rem;
+  }
+
+  .status-idle .title-layout {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
+  .status-idle .hero-title {
+    font-size: clamp(2.3rem, 7.4vmin, 5.4rem);
+  }
+
+  .status-idle .title-copy > p,
+  .status-idle .info-pill,
+  .status-idle .shortcut-panel p {
+    font-size: 0.72rem;
+  }
+
+  .status-idle .rank-gallery-header h3 {
+    font-size: 1rem;
+  }
+
+  .status-idle .start-panel {
+    padding: 14px;
+  }
+
+  .status-idle .difficulty-button {
+    gap: 0.28rem;
+    padding: 0.72rem;
+  }
+
+  .status-idle .difficulty-button em {
+    line-height: 1.45;
+  }
+
+  .status-finished .result-grid .stat-tile {
+    min-height: 62px;
+  }
+
+  .status-finished .score-submit-panel,
+  .status-finished .leaderboard-panel {
+    max-height: 31vh;
+  }
+
   .game-layout {
     gap: 10px;
     padding: 10px 0 8px;
@@ -2689,6 +2982,61 @@ button {
   .status-playing .icon-button {
     border-radius: 12px;
     padding: 0.5rem 0.68rem;
+  }
+
+  .status-idle .header-actions,
+  .status-finished .header-actions {
+    gap: 0.42rem;
+  }
+
+  .status-idle .icon-button,
+  .status-finished .icon-button {
+    border-radius: 12px;
+    padding: 0.48rem 0.62rem;
+  }
+
+  .status-idle .hero-title {
+    margin-top: 0.45rem;
+    font-size: clamp(2rem, 6.7vmin, 4.6rem);
+  }
+
+  .status-idle .shortcut-panel {
+    margin-top: 0.45rem;
+    padding: 0.5rem 0.6rem;
+  }
+
+  .status-idle .rank-gallery {
+    max-height: 23vh;
+    overflow: hidden;
+  }
+
+  .status-idle .title-copy .mt-6 {
+    margin-top: 0.65rem;
+  }
+
+  .status-idle .title-copy .mt-8 {
+    margin-top: 0.7rem;
+  }
+
+  .status-finished .rank-panel {
+    padding: 10px;
+  }
+
+  .status-finished .rank-letter {
+    min-height: 88px;
+  }
+
+  .status-finished .result-score-row {
+    margin-top: 0.45rem;
+  }
+
+  .status-finished .post-result-grid {
+    gap: 8px;
+  }
+
+  .status-finished .score-submit-panel,
+  .status-finished .leaderboard-panel {
+    max-height: 24vh;
   }
 
   .stat-tile {
