@@ -964,6 +964,63 @@ button {
     repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.06) 0 1px, transparent 1px 9px);
 }
 
+.enemy-boss {
+  z-index: 6;
+}
+
+.enemy-boss .enemy-core {
+  border-color: rgba(251, 191, 36, 0.78);
+  border-width: 2px;
+  background:
+    radial-gradient(circle at 34% 24%, rgba(254, 240, 138, 0.48), transparent 0 15%, transparent 16%),
+    radial-gradient(circle at 50% 62%, rgba(251, 113, 133, 0.3), transparent 38%),
+    linear-gradient(145deg, rgba(127, 29, 29, 0.96), rgba(88, 28, 135, 0.92) 48%, rgba(15, 23, 42, 0.96)),
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.09) 0 1px, transparent 1px 8px);
+  box-shadow: 0 0 34px rgba(251, 191, 36, 0.26), 0 0 48px rgba(248, 113, 113, 0.22), inset 0 -30px 42px rgba(0, 0, 0, 0.38);
+  animation: bossPulse 1.7s ease-in-out infinite;
+}
+
+.enemy-boss .enemy-core::before {
+  border-color: rgba(251, 191, 36, 0.58);
+  box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.78), 0 0 20px rgba(251, 191, 36, 0.2);
+}
+
+.enemy-boss .enemy-horns {
+  display: flex;
+  inset: -16% -1% auto;
+}
+
+.enemy-boss .enemy-mask span {
+  background: linear-gradient(90deg, #fef3c7, #fb7185 48%, #f43f5e);
+  box-shadow: 0 0 22px rgba(251, 191, 36, 0.62), 0 0 16px rgba(248, 113, 113, 0.72);
+}
+
+.enemy-boss .enemy-label {
+  color: #fde68a;
+  text-shadow: 0 0 16px rgba(251, 191, 36, 0.8), 0 0 14px rgba(248, 113, 113, 0.55);
+}
+
+.enemy-boss .target-ring {
+  inset: -22%;
+  border-color: rgba(251, 191, 36, 0.78);
+  border-left-color: rgba(248, 113, 113, 0.18);
+  filter: drop-shadow(0 0 24px rgba(251, 191, 36, 0.36));
+  animation: bossRingSpin 1.15s linear infinite;
+}
+
+@keyframes bossPulse {
+  50% {
+    box-shadow: 0 0 42px rgba(251, 191, 36, 0.36), 0 0 58px rgba(248, 113, 113, 0.3), inset 0 -30px 42px rgba(0, 0, 0, 0.38);
+    transform: scale(1.035);
+  }
+}
+
+@keyframes bossRingSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .enemy-core::before,
 .enemy-core::after {
   position: absolute;
@@ -1147,6 +1204,106 @@ button {
 .visual-effect {
   position: absolute;
   transform-origin: center;
+}
+
+.finisher-strike {
+  position: absolute;
+  z-index: 10;
+  display: grid;
+  width: clamp(136px, 16vw, 220px);
+  aspect-ratio: 1;
+  margin-top: clamp(-92px, -7vw, -62px);
+  margin-left: clamp(-104px, -8vw, -66px);
+  place-items: center;
+  pointer-events: none;
+  filter: drop-shadow(0 0 24px rgba(34, 211, 238, 0.56));
+}
+
+.finisher-silhouette {
+  position: absolute;
+  z-index: 2;
+  width: 34%;
+  aspect-ratio: 0.82;
+  border: 1px solid rgba(103, 232, 249, 0.36);
+  border-radius: 45% 45% 38% 38%;
+  background:
+    radial-gradient(circle at 50% 28%, rgba(226, 232, 240, 0.96) 0 10%, transparent 11%),
+    linear-gradient(160deg, #0f172a, #020617 62%, #164e63);
+  box-shadow: 0 0 18px rgba(34, 211, 238, 0.34), inset 0 -14px 18px rgba(0, 0, 0, 0.44);
+  transform: translate(-22%, 8%) rotate(-10deg);
+}
+
+.finisher-silhouette::after {
+  position: absolute;
+  top: 30%;
+  right: 18%;
+  left: 18%;
+  height: 12%;
+  border-radius: 999px;
+  background: #67e8f9;
+  box-shadow: 0 0 14px rgba(34, 211, 238, 0.82);
+  content: "";
+}
+
+.finisher-blade {
+  position: absolute;
+  z-index: 1;
+  width: 118%;
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, #fef9c3 18%, #ffffff 42%, #67e8f9 62%, #fb7185 78%, transparent);
+  box-shadow: 0 0 26px rgba(34, 211, 238, 0.9), 0 0 24px rgba(251, 191, 36, 0.34);
+  transform: rotate(-24deg);
+}
+
+.finisher-blade::before,
+.finisher-blade::after {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: inherit;
+  content: "";
+  opacity: 0.72;
+}
+
+.finisher-blade::before {
+  transform: rotate(34deg);
+}
+
+.finisher-blade::after {
+  transform: rotate(-34deg);
+}
+
+.finisher-strike strong {
+  position: absolute;
+  right: -6%;
+  bottom: 4%;
+  z-index: 3;
+  border: 1px solid rgba(251, 191, 36, 0.42);
+  border-radius: 999px;
+  background: rgba(2, 6, 23, 0.76);
+  color: #fde68a;
+  font-size: clamp(0.68rem, 1vw, 0.86rem);
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  padding: 0.32rem 0.62rem;
+  text-shadow: 0 0 14px rgba(251, 191, 36, 0.55);
+}
+
+.finisher-tier-2 .finisher-blade {
+  height: 12px;
+}
+
+.finisher-tier-3,
+.finisher-tier-4 {
+  filter: drop-shadow(0 0 28px rgba(251, 191, 36, 0.36)) drop-shadow(0 0 18px rgba(251, 113, 133, 0.26));
+}
+
+.finisher-tier-3 .finisher-blade,
+.finisher-tier-4 .finisher-blade {
+  width: 132%;
+  height: 13px;
+  background: linear-gradient(90deg, transparent, #ffffff 14%, #fef08a 34%, #67e8f9 58%, #fb7185 78%, transparent);
 }
 
 .visual-effect.slash {

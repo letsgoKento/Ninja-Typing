@@ -36,7 +36,14 @@ type VisualEffect = {
   rotate: number;
 };
 
-type AudioKind = "type" | "miss" | "clear" | "hit" | "start" | "tap" | "finish";
+type FinisherEffect = {
+  id: number;
+  combo: number;
+  left: number;
+  top: number;
+};
+
+type AudioKind = "type" | "miss" | "clear" | "hit" | "start" | "tap" | "finish" | "finisher";
 
 type EnemyConfig = {
   id: number;
@@ -45,6 +52,7 @@ type EnemyConfig = {
   top: number;
   scale: number;
   variant: number;
+  boss: boolean;
 };
 
 type PromptFontSizes = {
@@ -144,6 +152,7 @@ const COPY = {
 const DIFFICULTY_ORDER: Difficulty[] = ["easy", "normal", "hard"];
 const RANK_ID_SET = new Set(RANKS.map((rank) => rank.id));
 const enemyNames = ["ONI", "AKA NINJA", "KAGE ONI", "ROGUE", "SHADOW"];
+const bossEnemyNames = ["AKATSUKI", "ONI LORD", "KAGE BOSS", "CRIMSON"];
 const smallKana = new Set("ゃゅょぁぃぅぇぉゎっャュョァィゥェォヮッ".split(""));
 
 const TEXT_READING_OVERRIDES: Array<{ text: string; readings: string[] }> = [
@@ -216,14 +225,24 @@ const TEXT_READING_OVERRIDES: Array<{ text: string; readings: string[] }> = [
   { text: "忍者", readings: ["にん", "じゃ"] }
 ].sort((first, second) => second.text.length - first.text.length);
 
-function createEnemyConfig(id: number): EnemyConfig {
+function createEnemyConfig(id: number, targetCombo = 1): EnemyConfig {
+  const boss = targetCombo > 0 && targetCombo % 5 === 0;
+
   return {
     id,
-    label: enemyNames[id % enemyNames.length],
+    label: boss ? bossEnemyNames[id % bossEnemyNames.length] : enemyNames[id % enemyNames.length],
     left: 58 + Math.random() * 30,
     top: 28 + Math.random() * 42,
-    scale: 0.86 + Math.random() * 0.24,
-    variant: id % 4
+    scale: (boss ? 1.08 : 0.86) + Math.random() * (boss ? 0.18 : 0.24),
+    variant: id % 4,
+    boss
+  };
+}
+
+function getEnemySlashPosition(config: EnemyConfig, spread = 9) {
+  return {
+    left: Math.max(12, Math.min(88, config.left + (Math.random() - 0.5) * spread)),
+    top: Math.max(12, Math.min(82, config.top + (Math.random() - 0.5) * spread * 0.9))
   };
 }
 
@@ -370,7 +389,7 @@ function useNinjaAudio(enabled: boolean) {
   }, [enabled]);
 
   const play = useCallback(
-    (kind: AudioKind) => {
+    (kind: AudioKind, combo = 0) => {
       const context = getContext();
 
       if (!context) {
@@ -414,6 +433,59 @@ function useNinjaAudio(enabled: boolean) {
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
         oscillator.start(now);
         oscillator.stop(now + 0.25);
+        return;
+      }
+
+      if (kind === "finisher") {
+        const tier = Math.min(4, Math.max(1, Math.floor(combo / 5)));
+
+        oscillator.type = "sawtooth";
+        oscillator.frequency.setValueAtTime(170 + tier * 24, now);
+        oscillator.frequency.exponentialRampToValueAtTime(1040 + tier * 120, now + 0.1);
+        oscillator.frequency.exponentialRampToValueAtTime(320 + tier * 42, now + 0.2);
+        gain.gain.setValueAtTime(0.078 + tier * 0.012, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.23);
+        oscillator.start(now);
+        oscillator.stop(now + 0.24);
+
+        const blade = context.createOscillator();
+        const bladeGain = context.createGain();
+        blade.connect(bladeGain);
+        bladeGain.connect(context.destination);
+        blade.type = "triangle";
+        blade.frequency.setValueAtTime(1160 + tier * 130, now + 0.04);
+        blade.frequency.exponentialRampToValueAtTime(500 + tier * 44, now + 0.19);
+        bladeGain.gain.setValueAtTime(0.058 + tier * 0.012, now + 0.04);
+        bladeGain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+        blade.start(now + 0.04);
+        blade.stop(now + 0.24);
+
+        const impact = context.createOscillator();
+        const impactGain = context.createGain();
+        impact.connect(impactGain);
+        impactGain.connect(context.destination);
+        impact.type = "sine";
+        impact.frequency.setValueAtTime(92 + tier * 10, now + 0.12);
+        impact.frequency.exponentialRampToValueAtTime(54 + tier * 4, now + 0.32);
+        impactGain.gain.setValueAtTime(0.068 + tier * 0.012, now + 0.12);
+        impactGain.gain.exponentialRampToValueAtTime(0.001, now + 0.34);
+        impact.start(now + 0.12);
+        impact.stop(now + 0.36);
+
+        if (tier >= 2) {
+          const spark = context.createOscillator();
+          const sparkGain = context.createGain();
+          spark.connect(sparkGain);
+          sparkGain.connect(context.destination);
+          spark.type = "sine";
+          spark.frequency.setValueAtTime(780 + tier * 120, now + 0.18);
+          spark.frequency.exponentialRampToValueAtTime(1380 + tier * 160, now + 0.3);
+          sparkGain.gain.setValueAtTime(0.028 + tier * 0.006, now + 0.18);
+          sparkGain.gain.exponentialRampToValueAtTime(0.001, now + 0.36);
+          spark.start(now + 0.18);
+          spark.stop(now + 0.37);
+        }
+
         return;
       }
 
@@ -668,12 +740,12 @@ function ScoreGuidePanel() {
       <div>
         <p className="panel-kicker">Score System</p>
         <h2>スコア計算</h2>
-        <p className="score-guide-lead">1つのお題を打ち切るたびに、読みの長さ・難易度・コンボ倍率をもとに加点されます。</p>
+        <p className="score-guide-lead">長いお題を正確に打ち切り、コンボをつなぐほど大きく伸びます。ミスを減らして連撃を続けるのが高得点への近道です。</p>
       </div>
 
       <div className="score-formula-card">
-        <span>FORMULA</span>
-        <strong>round((85 + 読み文字数 x 16) x 難易度倍率 x コンボ倍率)</strong>
+        <span>POINT</span>
+        <strong>お題の長さ + 難易度ボーナス + コンボボーナスで加点</strong>
       </div>
 
       <div className="score-guide-grid">
@@ -681,19 +753,19 @@ function ScoreGuidePanel() {
           <span>01</span>
           <h3>基本点</h3>
           <p>読みの空白を除いた文字数が長いほど高くなります。短い単語より、長い文章の方が大きく伸びます。</p>
-          <em>85 + 読み文字数 x 16</em>
+          <em>長いお題ほど高得点</em>
         </section>
         <section>
           <span>02</span>
           <h3>難易度倍率</h3>
-          <p>難しいモードほど同じお題でも高得点になります。ランキングは難易度ごとに分かれています。</p>
-          <em>Easy x{DIFFICULTIES.easy.multiplier} / Normal x{DIFFICULTIES.normal.multiplier} / Hard x{DIFFICULTIES.hard.multiplier}</em>
+          <p>NormalとHardは時間が長く、1問あたりの得点も高めです。ランキングは難易度ごとに分かれています。</p>
+          <em>Easy 標準 / Normal 高め / Hard さらに高め</em>
         </section>
         <section>
           <span>03</span>
           <h3>コンボ倍率</h3>
           <p>1コンボごとに+10%。最大で+400%まで伸びます。ミスするとコンボは0に戻ります。</p>
-          <em>1 + min(コンボ x 0.1, 4)</em>
+          <em>つなぐほど一気に伸びる</em>
         </section>
         <section>
           <span>04</span>
@@ -756,7 +828,7 @@ function SettingsPanel({
           <span>DISPLAY ORDER</span>
           <strong>お題と演出の上下</strong>
           <p>
-            「演出が上」は忍者と敵の動きを先に見せる標準配置。「お題が上」は入力する文字を先に読みたい人向けに、お題とローマ字を演出より上へ移動します。
+            「演出が上」忍者と敵の動きを画面上部に見せる標準配置。「お題が上」お題とローマ字を演出より上へ移動します。
           </p>
         </div>
         <div className="layout-choice-group" role="radiogroup" aria-label="お題と演出の表示順">
@@ -863,7 +935,7 @@ function EnemyFigure({ hit, config }: { hit: boolean; config: EnemyConfig }) {
   return (
     <div
       key={config.id}
-      className="enemy-wrap"
+      className={`enemy-wrap ${config.boss ? "enemy-boss" : ""}`}
       style={{
         left: `${config.left}%`,
         top: `${config.top}%`,
@@ -1150,6 +1222,7 @@ export function NinjaTypingGame() {
   const [enemyConfig, setEnemyConfig] = useState(() => createEnemyConfig(0));
   const [attackId, setAttackId] = useState(0);
   const [attackCombo, setAttackCombo] = useState(0);
+  const [finisherEffect, setFinisherEffect] = useState<FinisherEffect | null>(null);
   const [romajiOffset, setRomajiOffset] = useState(0);
   const [isResolving, setIsResolving] = useState(false);
   const [screenShake, setScreenShake] = useState(false);
@@ -1369,6 +1442,22 @@ export function NinjaTypingGame() {
     }, type === "hit" ? 760 : 360);
   }, []);
 
+  const triggerFinisherEffect = useCallback((combo: number, position: Pick<FinisherEffect, "left" | "top">) => {
+    const id = effectIdRef.current + 1;
+    effectIdRef.current = id;
+
+    setFinisherEffect({
+      id,
+      combo,
+      left: position.left,
+      top: position.top
+    });
+
+    window.setTimeout(() => {
+      setFinisherEffect((current) => (current?.id === id ? null : current));
+    }, 560);
+  }, []);
+
   const finishGame = useCallback(() => {
     if (statusRef.current !== "playing") {
       return;
@@ -1382,6 +1471,7 @@ export function NinjaTypingGame() {
     setIsResolving(false);
     setInput("");
     setEnemyHit(false);
+    setFinisherEffect(null);
     setTimeLeft(0);
     audio.stopAmbient();
     audio.play("finish");
@@ -1499,6 +1589,7 @@ export function NinjaTypingGame() {
     setWrongIndex(null);
     setEnemyHit(false);
     setEnemyConfig((value) => createEnemyConfig(value.id + 1));
+    setFinisherEffect(null);
     setAttackId(0);
     setAttackCombo(0);
     setRomajiOffset(0);
@@ -1523,6 +1614,7 @@ export function NinjaTypingGame() {
     setIsResolving(false);
     setWrongIndex(null);
     setEnemyHit(false);
+    setFinisherEffect(null);
   }, [audio, difficulty]);
 
   const openLeaderboard = useCallback(
@@ -1629,7 +1721,18 @@ export function NinjaTypingGame() {
       setScreenShake(true);
       setAttackId((value) => value + 1);
       setAttackCombo(comboValue);
-      audio.play("clear");
+      const milestoneCombo = playerSettings.comboEffects && comboValue > 0 && comboValue % 5 === 0;
+
+      if (milestoneCombo) {
+        triggerFinisherEffect(comboValue, {
+          left: enemyConfig.left,
+          top: enemyConfig.top
+        });
+        audio.play("finisher", comboValue);
+      } else {
+        audio.play("clear");
+      }
+
       setCurrentPrompt(incomingPrompt);
       setNextPrompt(pickWord(difficulty, incomingPrompt));
       setPromptFontSizes(getPromptFontSizes(incomingPrompt));
@@ -1663,13 +1766,14 @@ export function NinjaTypingGame() {
         }
 
         const finishSlashCount = playerSettings.comboEffects ? Math.min(getComboEffectStep(comboValue), 8) : 0;
+        const totalSlashCount = finishSlashCount + (milestoneCombo ? 4 : 0);
 
-        for (let index = 0; index < finishSlashCount; index += 1) {
-          const angle = (Math.PI * 2 * index) / Math.max(1, finishSlashCount);
+        for (let index = 0; index < totalSlashCount; index += 1) {
+          const angle = (Math.PI * 2 * index) / Math.max(1, totalSlashCount);
 
           addEffect("slash", {
-            left: enemyConfig.left + Math.cos(angle) * 8,
-            top: enemyConfig.top + Math.sin(angle) * 8
+            left: enemyConfig.left + Math.cos(angle) * (milestoneCombo ? 12 : 8),
+            top: enemyConfig.top + Math.sin(angle) * (milestoneCombo ? 12 : 8)
           });
         }
 
@@ -1686,10 +1790,10 @@ export function NinjaTypingGame() {
         }
 
         setEnemyHit(false);
-        setEnemyConfig((value) => createEnemyConfig(value.id + 1));
+        setEnemyConfig((value) => createEnemyConfig(value.id + 1, comboValue + 1));
       }, 390);
     },
-    [addEffect, audio, difficulty, enemyConfig.left, enemyConfig.top, nextPrompt, playerSettings.comboEffects]
+    [addEffect, audio, difficulty, enemyConfig.left, enemyConfig.top, nextPrompt, playerSettings.comboEffects, triggerFinisherEffect]
   );
 
   const handleKeyDown = useCallback(
@@ -1945,16 +2049,13 @@ export function NinjaTypingGame() {
       if (romajiCandidates.some((candidate) => candidate.startsWith(nextInput))) {
         setInput(nextInput);
         setWrongIndex(null);
-        addEffect("slash");
+        addEffect("slash", getEnemySlashPosition(enemyConfig, enemyConfig.boss ? 13 : 9));
 
         const slashLevel = playerSettings.comboEffects ? Math.min(getComboEffectStep(metricsRef.current.combo), 6) : 0;
 
         for (let index = 0; index < slashLevel; index += 1) {
           if ((input.length + index) % 2 === 0) {
-            addEffect("slash", {
-              left: 44 + Math.random() * 30,
-              top: 24 + Math.random() * 36
-            });
+            addEffect("slash", getEnemySlashPosition(enemyConfig, enemyConfig.boss ? 18 : 12));
           }
         }
 
@@ -2008,6 +2109,7 @@ export function NinjaTypingGame() {
       currentPrompt,
       accuracy,
       difficulty,
+      enemyConfig,
       input,
       isResolving,
       metrics.maxCombo,
@@ -2280,6 +2382,32 @@ export function NinjaTypingGame() {
                   </AnimatePresence>
 
                   <EnemyFigure hit={enemyHit} config={enemyConfig} />
+
+                  <AnimatePresence>
+                    {finisherEffect ? (
+                      <motion.div
+                        key={finisherEffect.id}
+                        className={`finisher-strike finisher-tier-${Math.min(4, Math.floor(finisherEffect.combo / 5))}`}
+                        style={{
+                          left: `${finisherEffect.left}%`,
+                          top: `${finisherEffect.top}%`
+                        }}
+                        initial={{ opacity: 0, x: -260, y: 76, scale: 0.76 }}
+                        animate={{
+                          opacity: [0, 1, 1, 0],
+                          x: [-260, -24, 18, 28],
+                          y: [76, 4, -4, -8],
+                          scale: [0.76, 1.05, 1.08, 1.02]
+                        }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.54, ease: "easeOut" }}
+                      >
+                        <span className="finisher-silhouette" />
+                        <span className="finisher-blade" />
+                        <strong>{finisherEffect.combo} COMBO</strong>
+                      </motion.div>
+                    ) : null}
+                  </AnimatePresence>
 
                   <div className="effect-layer">
                     <AnimatePresence>
