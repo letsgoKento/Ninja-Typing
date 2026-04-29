@@ -23,7 +23,15 @@ import {
   type Metrics,
   type RankDefinition
 } from "@/lib/game";
-import { buildRomajiOptions, getReadingProgress, getRomajiGuide, toHiragana, type ReadingProgress } from "@/lib/romaji";
+import {
+  getReadingProgress,
+  getRomajiGuideForInput,
+  getRomajiGuideLength,
+  isRomajiInputComplete,
+  isRomajiInputPrefix,
+  toHiragana,
+  type ReadingProgress
+} from "@/lib/romaji";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import type { LeaderboardRecord } from "@/types/leaderboard";
 import { createGameShareUrl, createScoreShareUrl, openShareUrl } from "@/utils/share";
@@ -312,8 +320,7 @@ function getKanaFontSize(length: number) {
 }
 
 function getPromptFontSizes(prompt: TypingPrompt): PromptFontSizes {
-  const romajiOptions = buildRomajiOptions(prompt.reading);
-  const longestGuideLength = Math.max(prompt.reading.length, ...romajiOptions.map((option) => option.length));
+  const longestGuideLength = Math.max(prompt.reading.length, getRomajiGuideLength(prompt.reading));
 
   return {
     kana: getKanaFontSize(Array.from(prompt.reading).length),
@@ -1248,8 +1255,7 @@ export function NinjaTypingGame() {
   const accuracy = useMemo(() => calculateAccuracy(metrics.correctKeys, metrics.totalKeys), [metrics.correctKeys, metrics.totalKeys]);
   const cpm = useMemo(() => calculateCpm(metrics.totalKeys, gameDurationSeconds), [gameDurationSeconds, metrics.totalKeys]);
   const rank = useMemo(() => getRank(metrics.score), [metrics.score]);
-  const romajiCandidates = useMemo(() => buildRomajiOptions(currentPrompt.reading), [currentPrompt.reading]);
-  const romajiGuide = useMemo(() => getRomajiGuide(romajiCandidates, input), [input, romajiCandidates]);
+  const romajiGuide = useMemo(() => getRomajiGuideForInput(currentPrompt.reading, input), [currentPrompt.reading, input]);
   const readingProgress = useMemo(() => getReadingProgress(currentPrompt.reading, romajiGuide, input), [currentPrompt.reading, input, romajiGuide]);
   const textProgress = useMemo(
     () => getTextProgress(currentPrompt.text, currentPrompt.reading, readingProgress, currentPrompt.readingParts),
@@ -2063,7 +2069,7 @@ export function NinjaTypingGame() {
       const typedChar = event.key.toLowerCase();
       const nextInput = input + typedChar;
 
-      if (romajiCandidates.some((candidate) => candidate.startsWith(nextInput))) {
+      if (isRomajiInputPrefix(currentPrompt.reading, nextInput)) {
         setInput(nextInput);
         setWrongIndex(null);
         addEffect("slash", getEnemySlashPosition(enemyConfig, enemyConfig.boss ? 13 : 9));
@@ -2078,7 +2084,7 @@ export function NinjaTypingGame() {
 
         audio.play("type");
 
-        if (romajiCandidates.includes(nextInput)) {
+        if (isRomajiInputComplete(currentPrompt.reading, nextInput)) {
           const completedCombo = metricsRef.current.combo + 1;
 
           setMetrics((previous) => {
@@ -2132,7 +2138,6 @@ export function NinjaTypingGame() {
       metrics.maxCombo,
       metrics.score,
       returnToTitle,
-      romajiCandidates,
       openLeaderboard,
       openAuth,
       openHelp,

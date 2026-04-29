@@ -155,54 +155,211 @@ function leadingConsonant(value: string) {
   return first;
 }
 
-function combine(prefixes: string[], suffixes: string[]) {
-  return prefixes.flatMap((prefix) => suffixes.map((suffix) => `${prefix}${suffix}`));
+type RomajiSegment = {
+  nextIndex: number;
+  options: string[];
+};
+
+function getSegmentOptions(source: string, index: number): RomajiSegment {
+  const char = source[index];
+
+  if (char === "\u3063") {
+    const nextSegment = index + 1 < source.length ? getSegmentOptions(source, index + 1) : null;
+    const doubledConsonants = nextSegment
+      ? unique(nextSegment.options.map((option) => leadingConsonant(option)).filter(Boolean))
+      : [];
+
+    return {
+      nextIndex: index + 1,
+      options: unique([...doubledConsonants, ...KANA_ROMAJI[char]])
+    };
+  }
+
+  const pair = source.slice(index, index + 2);
+
+  if (COMBO_ROMAJI[pair]) {
+    return {
+      nextIndex: index + 2,
+      options: COMBO_ROMAJI[pair]
+    };
+  }
+
+  return {
+    nextIndex: index + 1,
+    options: KANA_ROMAJI[char] ?? [char]
+  };
 }
 
-export function buildRomajiOptions(reading: string) {
-  const source = toHiragana(reading.toLowerCase());
-  const memo = new Map<number, string[]>();
+function createRomajiSource(reading: string) {
+  return toHiragana(reading.toLowerCase());
+}
 
-  function build(index: number): string[] {
+function canMatchPrefix(source: string, input: string) {
+  const memo = new Set<string>();
+
+  function match(index: number, inputIndex: number): boolean {
+    if (inputIndex >= input.length) {
+      return true;
+    }
+
     if (index >= source.length) {
-      return [""];
+      return inputIndex === input.length;
+    }
+
+    const key = `${index}:${inputIndex}`;
+
+    if (memo.has(key)) {
+      return false;
+    }
+
+    memo.add(key);
+
+    const segment = getSegmentOptions(source, index);
+    const remaining = input.slice(inputIndex);
+
+    return segment.options.some((option) => {
+      if (option.startsWith(remaining)) {
+        return true;
+      }
+
+      if (input.startsWith(option, inputIndex)) {
+        return match(segment.nextIndex, inputIndex + option.length);
+      }
+
+      return false;
+    });
+  }
+
+  return match(0, 0);
+}
+
+function canMatchComplete(source: string, input: string) {
+  const memo = new Set<string>();
+
+  function match(index: number, inputIndex: number): boolean {
+    if (index >= source.length) {
+      return inputIndex === input.length;
+    }
+
+    const key = `${index}:${inputIndex}`;
+
+    if (memo.has(key)) {
+      return false;
+    }
+
+    memo.add(key);
+
+    const segment = getSegmentOptions(source, index);
+
+    return segment.options.some((option) => {
+      if (!input.startsWith(option, inputIndex)) {
+        return false;
+      }
+
+      return match(segment.nextIndex, inputIndex + option.length);
+    });
+  }
+
+  return match(0, 0);
+}
+
+function buildCanonicalGuide(source: string, index = 0): string {
+  if (index >= source.length) {
+    return "";
+  }
+
+  const segment = getSegmentOptions(source, index);
+  const option = segment.options[0] ?? "";
+
+  return `${option}${buildCanonicalGuide(source, segment.nextIndex)}`;
+}
+
+function buildGuideForInput(source: string, input: string) {
+  const memo = new Set<string>();
+
+  function build(index: number, inputIndex: number): string | null {
+    if (inputIndex >= input.length) {
+      return buildCanonicalGuide(source, index);
+    }
+
+    if (index >= source.length) {
+      return inputIndex === input.length ? "" : null;
+    }
+
+    const key = `${index}:${inputIndex}`;
+
+    if (memo.has(key)) {
+      return null;
+    }
+
+    memo.add(key);
+
+    const segment = getSegmentOptions(source, index);
+    const remaining = input.slice(inputIndex);
+
+    for (const option of segment.options) {
+      if (option.startsWith(remaining)) {
+        return `${remaining}${option.slice(remaining.length)}${buildCanonicalGuide(source, segment.nextIndex)}`;
+      }
+
+      if (input.startsWith(option, inputIndex)) {
+        const rest = build(segment.nextIndex, inputIndex + option.length);
+
+        if (rest !== null) {
+          return `${option}${rest}`;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  return build(0, 0) ?? buildCanonicalGuide(source);
+}
+
+function getMaxGuideLength(source: string) {
+  const memo = new Map<number, number>();
+
+  function measure(index: number): number {
+    if (index >= source.length) {
+      return 0;
     }
 
     const cached = memo.get(index);
 
-    if (cached) {
+    if (cached !== undefined) {
       return cached;
     }
 
-    const char = source[index];
+    const segment = getSegmentOptions(source, index);
+    const restLength = measure(segment.nextIndex);
+    const maxLength = Math.max(...segment.options.map((option) => option.length + restLength));
 
-    if (char === "\u3063") {
-      const suffixes = build(index + 1);
-      const values = unique([
-        ...combine(KANA_ROMAJI[char], suffixes),
-        ...suffixes.map((suffix) => {
-          const consonant = leadingConsonant(suffix);
-          return consonant ? `${consonant}${suffix}` : suffix;
-        })
-      ]);
-
-      memo.set(index, values);
-      return values;
-    }
-
-    const pair = source.slice(index, index + 2);
-    const suffixIndex = COMBO_ROMAJI[pair] ? index + 2 : index + 1;
-    const prefixes = COMBO_ROMAJI[pair] ?? KANA_ROMAJI[char] ?? [char];
-    const values = unique(combine(prefixes, build(suffixIndex)));
-    memo.set(index, values);
-    return values;
+    memo.set(index, maxLength);
+    return maxLength;
   }
 
-  return build(0).sort((first, second) => first.length - second.length);
+  return measure(0);
 }
 
-export function getRomajiGuide(candidates: string[], input: string) {
-  return candidates.find((candidate) => candidate.startsWith(input)) ?? candidates[0] ?? "";
+export function getRomajiGuideForInput(reading: string, input: string) {
+  return buildGuideForInput(createRomajiSource(reading), input);
+}
+
+export function getRomajiGuideLength(reading: string) {
+  return getMaxGuideLength(createRomajiSource(reading));
+}
+
+export function isRomajiInputPrefix(reading: string, input: string) {
+  return canMatchPrefix(createRomajiSource(reading), input);
+}
+
+export function isRomajiInputComplete(reading: string, input: string) {
+  return canMatchComplete(createRomajiSource(reading), input);
+}
+
+export function buildRomajiOptions(reading: string) {
+  return [getRomajiGuideForInput(reading, "")];
 }
 
 export type ReadingProgress = {
@@ -212,7 +369,9 @@ export type ReadingProgress = {
 };
 
 function findMatchedOption(candidate: string, start: number, options: string[]) {
-  return options.find((option) => candidate.startsWith(option, start)) ?? options[0] ?? "";
+  return [...options]
+    .sort((first, second) => second.length - first.length)
+    .find((option) => candidate.startsWith(option, start)) ?? options[0] ?? "";
 }
 
 export function getReadingProgress(reading: string, guide: string, input: string): ReadingProgress {
