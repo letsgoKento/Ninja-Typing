@@ -24,6 +24,9 @@ export const metadata: Metadata = {
   creator: SITE_BRAND,
   publisher: SITE_BRAND,
   category: "game",
+  verification: {
+    google: "J0sozD4NP18QIOK7OW5-H3XJcUlJWceW6o2pnhT1jKU"
+  },
   alternates: {
     canonical: "/"
   },
