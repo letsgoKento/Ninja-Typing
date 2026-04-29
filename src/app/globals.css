@@ -1548,6 +1548,7 @@ button {
   gap: clamp(0.08rem, 0.45vw, 0.28rem);
   min-width: max-content;
   margin-inline: auto;
+  padding-inline: 0.18em 0.72em;
   will-change: transform;
   transition: transform 110ms ease-out;
 }

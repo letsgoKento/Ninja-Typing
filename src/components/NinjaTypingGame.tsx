@@ -80,6 +80,7 @@ const JA_TITLE = "\u5fcd\u8005\u30bf\u30a4\u30d4\u30f3\u30b0";
 const SPACE_MARK = "\u00a0";
 const PLAYER_SETTINGS_KEY = "ninja-typing-player-settings";
 const SOUND_SETTINGS_KEY = "ninja-typing-sound-enabled";
+const RESULT_SHORTCUT_GRACE_MS = 850;
 const disabledProgress: ReadingProgress = { completed: 0, activeStart: -1, activeEnd: -1 };
 
 const defaultPlayerSettings: PlayerSettings = {
@@ -1238,6 +1239,7 @@ export function NinjaTypingGame() {
   const statusRef = useRef(status);
   const effectIdRef = useRef(0);
   const shareLockRef = useRef(0);
+  const finishedAtRef = useRef(0);
   const romajiViewportRef = useRef<HTMLDivElement | null>(null);
   const romajiTrackRef = useRef<HTMLDivElement | null>(null);
   const audio = useNinjaAudio(soundEnabled);
@@ -1312,15 +1314,21 @@ export function NinjaTypingGame() {
       const viewportWidth = viewport.clientWidth;
       const trackWidth = track.scrollWidth;
       const activeChar = track.querySelector<HTMLElement>(`[data-romaji-index="${activeRomajiIndex}"]`);
+      const viewportStyle = window.getComputedStyle(viewport);
+      const paddingLeft = Number.parseFloat(viewportStyle.paddingLeft) || 0;
+      const paddingRight = Number.parseFloat(viewportStyle.paddingRight) || 0;
 
       if (!activeChar || trackWidth <= viewportWidth) {
         setRomajiOffset(0);
         return;
       }
 
+      const endGutter = Math.max(28, paddingRight + activeChar.offsetWidth * 0.75);
+      const startGutter = Math.max(12, paddingLeft * 0.5);
+      const scrollableWidth = Math.max(1, viewportWidth - startGutter - endGutter);
       const activeCenter = activeChar.offsetLeft + activeChar.offsetWidth / 2;
-      const targetCenter = viewportWidth * 0.48;
-      const minOffset = viewportWidth - trackWidth;
+      const targetCenter = startGutter + scrollableWidth * 0.48;
+      const minOffset = viewportWidth - trackWidth - endGutter;
       const nextOffset = Math.round(Math.min(0, Math.max(minOffset, targetCenter - activeCenter)));
 
       setRomajiOffset(nextOffset);
@@ -1465,6 +1473,7 @@ export function NinjaTypingGame() {
     }
 
     statusRef.current = "finished";
+    finishedAtRef.current = Date.now();
     const finalScore = metricsRef.current.score;
 
     setStatus("finished");
@@ -1579,6 +1588,7 @@ export function NinjaTypingGame() {
     const durationSeconds = DIFFICULTIES[difficulty].durationSeconds;
 
     statusRef.current = "playing";
+    finishedAtRef.current = 0;
     setStatus("playing");
     setCurrentPrompt(firstPrompt);
     setNextPrompt(queuedPrompt);
@@ -1607,6 +1617,7 @@ export function NinjaTypingGame() {
   const returnToTitle = useCallback(() => {
     audio.stopAmbient();
     statusRef.current = "idle";
+    finishedAtRef.current = 0;
     setStatus("idle");
     setTimeLeft(DIFFICULTIES[difficulty].durationSeconds);
     setInput("");
@@ -1916,6 +1927,11 @@ export function NinjaTypingGame() {
       }
 
       if (status === "finished") {
+        if (Date.now() - finishedAtRef.current < RESULT_SHORTCUT_GRACE_MS) {
+          event.preventDefault();
+          return;
+        }
+
         if (event.key === "Enter" || event.key === " " || key === "r") {
           event.preventDefault();
           startGame();
